@@ -14,7 +14,6 @@ import Dashboard from "./pages/Dashboard";
 import DashboardLayout from "./layout/DashboardLayOut";
 import PublicLayout from "./layout/PublicLayOut";
 function App() {
-  const isDashboard = location.pathname.startsWith("/dashboard")
   const [cart, setCart] = useState([]);
   const [userData, setUserData] = useState(null);
 
@@ -117,12 +116,16 @@ function App() {
       <Route element={<DashboardLayout userData={userData}/>}>
         <Route
           path="/dashboard"
-          element={<Dashboard />}
+          element={<Dashboard userData={userData} />}
         />
          <Route
           path="/profile"
-          element={<Dashboard />}
+          element={<Dashboard userData={userData} />}
         />
+        <Route path="/orders" element={<Dashboard userData={userData} />} />
+        <Route path="/view_orders" element={<Dashboard userData={userData} />} />
+        <Route path="/stocks" element={<Dashboard userData={userData} />} />
+        <Route path="/users" element={<Dashboard userData={userData} />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

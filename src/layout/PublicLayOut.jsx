@@ -1,0 +1,23 @@
+import { Outlet } from "react-router-dom";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+
+
+function PublicLayout({ cartCount, userData }) {
+  return (
+    <div className="flex min-h-screen flex-col bg-white text-zinc-950">
+      <Navbar
+        cartCount={cartCount}
+        userData={userData}
+      />
+
+      <main className="flex-1">
+        <Outlet />
+      </main>
+
+      <Footer />
+    </div>
+  );
+}
+
+export default PublicLayout;

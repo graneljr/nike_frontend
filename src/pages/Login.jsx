@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import api from "../middleware/apiMiddleware";
+import {toast} from "sonner";
 function Login({ setUserData }) {
   const [credentials, setCredentials] = useState({ email: "", password: "" });
 
@@ -13,17 +14,33 @@ function Login({ setUserData }) {
     }));
   };
 
+  const roleCheck = (role) => {
+    if (role === "admin") {
+      window.location.href = "/admin/dashboard";
+    } else {
+      window.location.href = "/dashboard";
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
       const response = await api.post("/auth/login",credentials);
 
-      alert(response.data.message);
+      toast("✅ Login Status", {
+          description: response.data.message,
+          action: {
+            label: "Go to dashboard",
+            onClick: () => {
+              roleCheck(response.data.role);
+            },
+          },
+        });
       setUserData(response.data.setUserData);
     } catch (error) {
-      alert(
-        error.response?.data?.message ||
+      toast.error(
+        error?.response?.data?.message ||
           "Login failed. Please try again.",
       );
     }

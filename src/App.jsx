@@ -11,6 +11,7 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import api from "./middleware/apiMiddleware";
 import Dashboard from "./pages/Dashboard";
+import { applyDisplaySettings, getDisplaySettings } from "./lib/displaySettings";
 import DashboardLayout from "./layout/DashboardLayOut";
 import PublicLayout from "./layout/PublicLayOut";
 function App() {
@@ -18,6 +19,7 @@ function App() {
   const [userData, setUserData] = useState(null);
 
   useEffect(() => {
+    applyDisplaySettings(getDisplaySettings());
     const getCurrentUser = async () => {
       try {
         const response = await api.get("/auth/me");
@@ -120,6 +122,10 @@ function App() {
         />
          <Route
           path="/profile"
+          element={<Dashboard userData={userData} />}
+        />
+          <Route
+          path="/settings"
           element={<Dashboard userData={userData} />}
         />
         <Route path="/orders" element={<Dashboard userData={userData} />} />

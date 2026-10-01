@@ -13,6 +13,7 @@ import { useLocation } from "react-router-dom";
 import products from "../data/products";
 import AdminDashboard from "./AdminDashboard";
 import UserDashboard from "./UserDashboard";
+import SettingsPage from "./SettingsPage";
 import {
   MetricCard,
   Modal,
@@ -45,6 +46,7 @@ function ProfilePage({ userData }) {
     </div>
   </>;
 }
+
 
 function OrdersPage({ admin, orderRows, onStatusUpdate }) {
   return <>
@@ -143,6 +145,7 @@ function Dashboard({ userData }) {
 
   let content;
   if (pathname === "/profile") content = <ProfilePage userData={userData} />;
+  else if (pathname === "/settings") content = <SettingsPage />;
   else if (pathname === "/orders" || pathname === "/view_orders") content = <OrdersPage admin={isAdmin} orderRows={orderRows} onStatusUpdate={updateOrderStatus} />;
   else if (pathname === "/stocks") content = <StockPage />;
   else if (pathname === "/users") content = <UsersPage />;

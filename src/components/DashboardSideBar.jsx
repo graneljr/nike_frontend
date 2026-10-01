@@ -5,12 +5,14 @@ import {
   faBoxesStacked,
   faCartShopping,
   faUsers,
+  faCog,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { NavLink } from "react-router-dom";
 import api from "../middleware/apiMiddleware";
 const userNav = [
   { icon: faHouse, label: "Dashboard", url: "/dashboard" },
+    { icon: faCog, label: "Settings", url: "/settings" },
   { icon: faUser, label: "Profile", url: "/profile" },
   { icon: faCartShopping, label: "Orders", url: "/orders" },
 ];
@@ -18,6 +20,7 @@ const userNav = [
 const adminNav = [
   { icon: faHouse, label: "Dashboard", url: "/dashboard" },
   { icon: faUser, label: "Profile", url: "/profile" },
+  { icon: faCog, label: "Settings", url: "/settings" },
   { icon: faCartShopping, label: "View Orders", url: "/view_orders" },
   { icon: faBoxesStacked, label: "View Stocks", url: "/stocks" },
   { icon: faUsers, label: "Users", url: "/users" },

@@ -8,7 +8,7 @@ function Cart({ cart, updateQuantity, removeFromCart }) {
 
   return (
     <section className="mx-auto min-h-[70vh] max-w-7xl px-5 py-14 sm:px-8 sm:py-20">
-      <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">Your selection</p>
+      <p className="text-sm font-bold  uppercase tracking-widest text-zinc-500">Your selection</p>
       <h1 className="mt-2 text-4xl font-black tracking-tight sm:text-6xl">Cart</h1>
       <div className="mt-10 grid grid-cols-1 gap-12 lg:grid-cols-[1fr_380px]">
         <div>

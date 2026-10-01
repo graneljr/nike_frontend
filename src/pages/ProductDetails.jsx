@@ -1,4 +1,4 @@
-import { useState } from "react";
+import {  useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import products from "../data/products";
 
@@ -8,7 +8,7 @@ function ProductDetails({ addToCart }) {
   const [selectedSize, setSelectedSize] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState("");
-
+  
   if (!product) {
     return (
       <div className="mx-auto max-w-7xl px-5 py-24 text-center sm:px-8">
@@ -31,8 +31,9 @@ function ProductDetails({ addToCart }) {
     <section className="mx-auto max-w-7xl px-5 py-12 sm:px-8 sm:py-20">
       <Link to="/shop" className="mb-8 inline-block text-sm text-zinc-500 transition hover:text-black">← Back to shop</Link>
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-16">
-        <div className="aspect-square overflow-hidden bg-zinc-100">
-          <img src={product.image} alt={product.name} className="h-full w-full object-contain p-8" />
+        <div className="relative aspect-square overflow-hidden bg-zinc-100">
+       
+            <img src={product.image} alt={product.name} className="h-full w-full object-contain p-8" />
         </div>
         <div className="flex flex-col justify-center">
           <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">{product.category}</p>

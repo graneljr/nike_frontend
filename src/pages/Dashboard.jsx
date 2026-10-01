@@ -80,8 +80,6 @@ function AddStockModal({ onClose, onAdd }) {
     const values = Object.fromEntries(new FormData(event.currentTarget));
     onAdd({
       ...values,
-      id: Date.now(),
-      sku: `NK-${String(Date.now()).slice(-5)}`,
       price: Number(values.price),
       quantity: Number(values.quantity),
       image: values.image || "/products/hero-shoe.png",

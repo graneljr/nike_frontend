@@ -6,7 +6,6 @@ import {
   faBoxesStacked,
   faPlus,
 } from "@fortawesome/free-solid-svg-icons";
-import products from "../data/products";
 import {
   MetricCard,
   Modal,
@@ -16,19 +15,43 @@ import api from "@/middleware/apiMiddleware";
 import { toast } from "sonner";
 
 const money = (amount) => `₱${Number(amount).toLocaleString()}`;
-const startingQuantities = [8, 12, 17, 24, 31, 15, 28, 19, 22];
-
-function StockDetailsModal({ item, onClose, onUpdateQuantity }) {
+function StockDetailsModal({ item, onClose, onUpdateQuantity, onAddSize }) {
   const [quantity, setQuantity] = useState(item?.quantity ?? 0);
-  useEffect(() => setQuantity(item?.quantity ?? 0), [item?.id, item?.quantity]);
+  const [newSize, setNewSize] = useState("");
+  const [newSizePrice, setNewSizePrice] = useState("");
+  const [newSizeQuantity, setNewSizeQuantity] = useState("");
+  const [isAddingSize, setIsAddingSize] = useState(false);
+  useEffect(
+    () => setQuantity(item?.quantity ?? 0),
+    [item?._id, item?.quantity],
+  );
   if (!item) return null;
 
   const details = [
     ["Category", item.category],
-    ["SKU", item.sku],
     ["Price", money(item.price)],
-    ["Available pairs", item.quantity],
+    [
+      "Available pairs",
+      item.size.reduce((total, entry) => total + entry.quantity, 0),
+    ],
   ];
+  const sizes = item.size || [];
+
+  const handleAddSize = async (event) => {
+    event.preventDefault();
+    setIsAddingSize(true);
+    const added = await onAddSize(item._id, {
+      size: newSize,
+      price: Number(newSizePrice),
+      quantity: Number(newSizeQuantity),
+    });
+    setIsAddingSize(false);
+    if (added) {
+      setNewSize("");
+      setNewSizePrice("");
+      setNewSizeQuantity("");
+    }
+  };
 
   return (
     <Modal eyebrow="Inventory details" title={item.name} onClose={onClose}>
@@ -53,6 +76,77 @@ function StockDetailsModal({ item, onClose, onUpdateQuantity }) {
           </div>
         ))}
       </dl>
+
+      <section className="mt-5 rounded-xl border border-zinc-200 p-4">
+        <h3 className="text-sm font-bold">Sizes and prices</h3>
+        {sizes.length > 0 ? (
+          <div className="mt-3 divide-y divide-zinc-100">
+            {sizes.map((entry) => (
+              <div
+                key={entry._id || entry.size}
+                className="flex items-center justify-between py-2 text-sm"
+              >
+                <span className="font-semibold">{entry.size}</span>
+                <span className="text-zinc-600">
+                  {money(entry.price)} · {entry.quantity} pairs
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-2 text-xs text-zinc-500">
+            No saved size options for this item.
+          </p>
+        )}
+
+        <form
+          onSubmit={handleAddSize}
+          className="mt-4 border-t border-zinc-100 pt-4"
+        >
+          <p className="mb-3 text-xs font-semibold text-zinc-600">
+            Add a size option
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            <input
+              aria-label="New size"
+              value={newSize}
+              onChange={(event) => setNewSize(event.target.value)}
+              placeholder="US 10"
+              required
+              className="min-w-0 rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-black"
+            />
+            <input
+              aria-label="Price for new size"
+              type="number"
+              min="0"
+              step="0.01"
+              value={newSizePrice}
+              onChange={(event) => setNewSizePrice(event.target.value)}
+              placeholder="Price"
+              required
+              className="min-w-0 rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-black"
+            />
+            <input
+              aria-label="Quantity for new size"
+              type="number"
+              min="0"
+              step="1"
+              value={newSizeQuantity}
+              onChange={(event) => setNewSizeQuantity(event.target.value)}
+              placeholder="Pairs"
+              required
+              className="min-w-0 rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-black"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isAddingSize}
+            className="mt-3 w-full rounded-full bg-black px-4 py-2.5 text-xs font-bold text-white hover:bg-zinc-800 disabled:opacity-60"
+          >
+            {isAddingSize ? "Adding…" : "Add size"}
+          </button>
+        </form>
+      </section>
 
       <form
         onSubmit={(event) => {
@@ -98,25 +192,57 @@ function StockDetailsModal({ item, onClose, onUpdateQuantity }) {
 }
 
 function AddStockModal({ onClose }) {
-  const handleSubmit = async (event) => {
-    try {
-      event.preventDefault();
-      const formData = new FormData(event.target);
-      const newProduct = {
-        name: formData.get("name"),
-        category: formData.get("category"),
-        price: Number(formData.get("price")),
-        size: formData.get("size"),
-        quantity: Number(formData.get("quantity")),
-        image: formData.get("image"),
-        description: formData.get("description"),
-      };
-      const response = await api.post("/products/add", newProduct);
-      toast.success(response.data.message || "Product added successfully");
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sizes, setSizes] = useState([{ size: "", price: "", quantity: "" }]);
 
-      onClose();
+  useEffect(
+    () => () => {
+      if (imagePreview) URL.revokeObjectURL(imagePreview);
+    },
+    [imagePreview],
+  );
+
+  const handleImageChange = (event) => {
+    const file = event.target.files?.[0] || null;
+    setSelectedImage(file);
+    setImagePreview(file ? URL.createObjectURL(file) : "");
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!selectedImage) {
+      toast.error("Choose a product image before adding stock.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData(event.currentTarget);
+      formData.set("image", selectedImage);
+      formData.set(
+        "sizes",
+        JSON.stringify(
+          sizes.map((entry) => ({
+            size: entry.size,
+            price: Number(entry.price),
+            quantity: Number(entry.quantity),
+          })),
+        ),
+      );
+      const response = await api.post("/products/add", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      toast.success(response.data.message || "Product added successfully");
+      onClose(response.data.product);
     } catch (error) {
-      toast.error("Failed to add product. Please try again.");
+      toast.error(
+        error.response?.data?.error ||
+          "Failed to add product. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -133,33 +259,15 @@ function AddStockModal({ onClose }) {
       placeholder: "Running",
       required: true,
     },
-    {
-      name: "price",
-      label: "Price (₱)",
-      placeholder: "0",
-      type: "number",
-      required: true,
-    },
-    {
-      name: "quantity",
-      label: "Quantity",
-      placeholder: "0",
-      type: "number",
-      required: true,
-    },
-     {
-      name: "size",
-      label: "Size",
-      placeholder: "US 9",
-      required: true,
-    },
-    {
-      name: "image",
-      label: "Image URL",
-      placeholder: "https://...",
-      wide: true,
-    },
   ];
+
+  const updateSize = (index, key, value) => {
+    setSizes((current) =>
+      current.map((entry, entryIndex) =>
+        entryIndex === index ? { ...entry, [key]: value } : entry,
+      ),
+    );
+  };
 
   return (
     <Modal
@@ -187,6 +295,103 @@ function AddStockModal({ onClose }) {
               />
             </label>
           ))}
+          <section className="sm:col-span-2">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-semibold text-zinc-600">
+                Sizes, prices, and quantities
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  setSizes((current) => [
+                    ...current,
+                    { size: "", price: "", quantity: "" },
+                  ])
+                }
+                className="text-xs font-bold underline underline-offset-4"
+              >
+                Add another size
+              </button>
+            </div>
+            <div className="space-y-3">
+              {sizes.map((entry, index) => (
+                <div
+                  key={index}
+                  className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2"
+                >
+                  <input
+                    aria-label={`Size ${index + 1}`}
+                    value={entry.size}
+                    onChange={(event) =>
+                      updateSize(index, "size", event.target.value)
+                    }
+                    placeholder="US 9"
+                    required
+                    className="min-w-0 rounded-lg border border-zinc-200 px-3 py-3 text-sm outline-none focus:border-black"
+                  />
+                  <input
+                    aria-label={`Price for size ${index + 1}`}
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={entry.price}
+                    onChange={(event) =>
+                      updateSize(index, "price", event.target.value)
+                    }
+                    placeholder="Price (₱)"
+                    required
+                    className="min-w-0 rounded-lg border border-zinc-200 px-3 py-3 text-sm outline-none focus:border-black"
+                  />
+                  <input
+                    aria-label={`Quantity for size ${index + 1}`}
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={entry.quantity}
+                    onChange={(event) =>
+                      updateSize(index, "quantity", event.target.value)
+                    }
+                    placeholder="Pairs"
+                    required
+                    className="min-w-0 rounded-lg border border-zinc-200 px-3 py-3 text-sm outline-none focus:border-black"
+                  />
+                  <button
+                    type="button"
+                    disabled={sizes.length === 1}
+                    onClick={() =>
+                      setSizes((current) =>
+                        current.filter((_, entryIndex) => entryIndex !== index),
+                      )
+                    }
+                    aria-label={`Remove size ${index + 1}`}
+                    className="px-2 text-sm font-bold text-zinc-500 disabled:opacity-30"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+          <label className="sm:col-span-2">
+            <span className="mb-2 block text-xs font-semibold text-zinc-600">
+              Product image
+            </span>
+            <input
+              name="image"
+              type="file"
+              accept="image/*"
+              required
+              onChange={handleImageChange}
+              className="w-full rounded-lg border border-zinc-200 px-4 py-3 text-sm file:mr-3 file:rounded-full file:border-0 file:bg-zinc-100 file:px-3 file:py-2 file:text-xs file:font-bold"
+            />
+            {imagePreview && (
+              <img
+                src={imagePreview}
+                alt="Selected product preview"
+                className="mt-3 h-32 w-full rounded-lg object-cover"
+              />
+            )}
+          </label>
           <label className="sm:col-span-2">
             <span className="mb-2 block text-xs font-semibold text-zinc-600">
               Description
@@ -209,9 +414,10 @@ function AddStockModal({ onClose }) {
           </button>
           <button
             type="submit"
-            className="flex-1 rounded-full bg-black px-4 py-3 text-sm font-bold text-white hover:bg-zinc-800"
+            disabled={isSubmitting}
+            className="flex-1 rounded-full bg-black px-4 py-3 text-sm font-bold text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Add stock
+            {isSubmitting ? "Uploading…" : "Add stock"}
           </button>
         </div>
       </form>
@@ -220,20 +426,31 @@ function AddStockModal({ onClose }) {
 }
 
 function StocksPage() {
-  const [stockItems, setStockItems] = useState(() =>
-    products.map((product, index) => ({
-      ...product,
-      sku: `NK-${String(product.id).padStart(4, "0")}`,
-      quantity: startingQuantities[index] ?? 12,
-    })),
-  );
+  const [stockItems, setStockItems] = useState([]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await api.get("/products");
+        setStockItems(response.data);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
   const totalPairs = stockItems.reduce(
-    (total, item) => total + Number(item.quantity),
+    (total, item) =>
+      total + item.size.reduce((sum, entry) => sum + entry.quantity, 0),
     0,
   );
-  const lowStockCount = stockItems.filter((item) => item.quantity <= 12).length;
+  const lowStockCount = stockItems.filter(
+    (item) => item.size.reduce((sum, entry) => sum + entry.quantity, 0) <= 12,
+  ).length;
 
   const updateQuantity = (id, quantity) => {
     setStockItems((current) =>
@@ -241,12 +458,36 @@ function StocksPage() {
     );
   };
 
-  const [addProductData, setAddProductData] = useState({
-    name: "",
-    price: 0,
-    description: "",
-    size: [],
-  });
+  const addSize = async (id, sizeData) => {
+    try {
+      const response = await api.post(`/products/${id}/sizes`, sizeData);
+      const product = response.data.product;
+      const quantity = product.size.reduce(
+        (total, entry) => total + entry.quantity,
+        0,
+      );
+      setStockItems((current) =>
+        current.map((item) =>
+          item.id === id
+            ? { ...item, ...product, id: product._id, quantity }
+            : item,
+        ),
+      );
+      setSelectedStock((current) =>
+        current?.id === id
+          ? { ...current, ...product, id: product._id, size: product.size }
+          : current,
+      );
+      toast.success(response.data.message || "Size added successfully");
+      return product;
+    } catch (error) {
+      toast.error(
+        error.response?.data?.error || "Failed to add size. Please try again.",
+      );
+      return null;
+    }
+  };
+
   return (
     <>
       <PageHeading
@@ -291,7 +532,6 @@ function StocksPage() {
             <thead className="bg-zinc-50 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
               <tr>
                 <th className="px-5 py-4">Product</th>
-                <th className="px-5 py-4">SKU</th>
                 <th className="px-5 py-4">Category</th>
                 <th className="px-5 py-4">Price</th>
                 <th className="px-5 py-4">Pairs available</th>
@@ -313,7 +553,6 @@ function StocksPage() {
                       <span className="font-bold">{item.name}</span>
                     </div>
                   </td>
-                  <td className="px-5 py-4 text-zinc-500">{item.sku}</td>
                   <td className="px-5 py-4">{item.category}</td>
                   <td className="px-5 py-4 font-semibold">
                     {money(item.price)}
@@ -321,14 +560,24 @@ function StocksPage() {
                   <td className="px-5 py-4">
                     <span
                       className={
-                        item.quantity <= 12
+                        item.size.reduce(
+                          (total, entry) => total + entry.quantity,
+                          0,
+                        ) <= 12
                           ? "font-bold text-zinc-900"
                           : "text-zinc-600"
                       }
                     >
-                      {item.quantity} pairs
+                      {item.size.reduce(
+                        (total, entry) => total + entry.quantity,
+                        0,
+                      )}{" "}
+                      pairs
                     </span>
-                    {item.quantity <= 12 && (
+                    {item.size.reduce(
+                      (total, entry) => total + entry.quantity,
+                      0,
+                    ) <= 12 && (
                       <span className="ml-2 rounded-full bg-zinc-100 px-2 py-1 text-[10px] font-semibold text-zinc-600">
                         Low
                       </span>
@@ -352,17 +601,19 @@ function StocksPage() {
 
       {isAddModalOpen && (
         <AddStockModal
-          onClose={() => setIsAddModalOpen(false)}
-          addProductData={addProductData}
-          onAdd={(addProductData) =>
-            setAddProductData((current) => [addProductData, ...current])
-          }
+          onClose={(product) => {
+            setIsAddModalOpen(false);
+            if (product) {
+              setStockItems((current) => [...current, product]);
+            }
+          }}
         />
       )}
       <StockDetailsModal
         item={selectedStock}
         onClose={() => setSelectedStock(null)}
         onUpdateQuantity={updateQuantity}
+        onAddSize={addSize}
       />
     </>
   );

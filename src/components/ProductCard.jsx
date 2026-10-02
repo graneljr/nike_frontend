@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 function ProductCard({ product }) {
   return (
     <div className="group">
-      <Link to={`/product/${product.id}`} aria-label={`View ${product.name}`}>
+      <Link to={`/product/${product._id ?? product.id}`} aria-label={`View ${product.name}`}>
         <div className="aspect-square relative overflow-hidden  bg-zinc-100">
           <img
             src={product.image}

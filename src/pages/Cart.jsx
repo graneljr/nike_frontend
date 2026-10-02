@@ -36,7 +36,7 @@ function Cart({ cart, updateQuantity, removeFromCart }) {
             <div className="flex justify-between"><span className="text-zinc-600">Subtotal</span><span>₱{subtotal.toLocaleString()}</span></div>
           </div>
           <div className="flex justify-between pt-5 font-bold"><span>Total</span><span>₱{subtotal.toLocaleString()}</span></div>
-          <CheckoutForm cartIsEmpty={cart.length === 0} />
+          <CheckoutForm cart={cart} />
         </aside>
       </div>
     </section>

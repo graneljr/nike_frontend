@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import { applyDisplaySettings, getDisplaySettings } from "./lib/displaySettings";
 import DashboardLayout from "./layout/DashboardLayOut";
 import PublicLayout from "./layout/PublicLayOut";
+import PayOrder from "./pages/PayOrder";
 function App() {
   const [cart, setCart] = useState([]);
   const [userData, setUserData] = useState(null);
@@ -133,6 +134,7 @@ function App() {
         <Route path="/stocks" element={<Dashboard userData={userData} />} />
         <Route path="/users" element={<Dashboard userData={userData} />} />
       </Route>
+         <Route path="/pay/:orderId" element={<PayOrder />} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>

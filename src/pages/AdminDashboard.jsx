@@ -9,7 +9,7 @@ import {
   faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
-import products from "../data/products";
+
 import {
   MetricCard,
   OrdersTable,
@@ -17,14 +17,16 @@ import {
   SectionTitle,
 } from "../components/dashboard/DashboardUI";
 import api from "@/middleware/apiMiddleware";
-function AdminDashboard({ orderRows, onStatusUpdate }) {
+import { toast } from "sonner";
+function AdminDashboard({orderRows,onStatusUpdate}) {
   const [metrics, setMetrics] = useState({
     ordersThisMonth: 0,
     productsInStock: 0,
     registeredUsers: 0,
     salesThisMonth: 0,
   });
-  
+
+  const [products, setProducts] = useState(null)
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
@@ -41,7 +43,16 @@ function AdminDashboard({ orderRows, onStatusUpdate }) {
       }
     };
 
-    fetchMetrics();
+    const getProducts = async () => {
+      try {
+        const products = await api.get("/products/")
+        setProducts(products.data)
+      } catch (error) {
+        toast.error(error.data.message)
+      }
+    }
+    fetchMetrics()
+    getProducts()
   }, []);
 
   return (
@@ -93,7 +104,7 @@ function AdminDashboard({ orderRows, onStatusUpdate }) {
         />
         <OrdersTable
           admin
-          rows={orderRows.slice(0, 3)}
+          rows={orderRows}
           onStatusUpdate={onStatusUpdate}
         />
       </section>
@@ -104,8 +115,8 @@ function AdminDashboard({ orderRows, onStatusUpdate }) {
           to="/stocks"
         />
         <div className="divide-y divide-zinc-100 rounded-xl border border-zinc-200 px-5">
-          {products.slice(0, 3).map((product, index) => (
-            <div key={product.id} className="flex items-center gap-4 py-3">
+          {products?.slice(0, 3).map((product, index) => (
+            <div key={product._id} className="flex items-center gap-4 py-3">
               <img
                 src={product.image}
                 alt=""
@@ -117,10 +128,14 @@ function AdminDashboard({ orderRows, onStatusUpdate }) {
               </div>
               <div className="text-right">
                 <p className="text-sm font-bold">
-                  {index === 0 ? "08" : index === 1 ? "12" : "17"} pairs
+                  {
+                    product?.size?.reduce((total, item)=> total + item.quantity, 0)
+                  } pairs
                 </p>
                 <p className="mt-1 text-[10px] uppercase tracking-wider text-zinc-500">
-                  Low stock
+                {
+                    product?.size?.reduce((total, item)=> total + item.quantity, 0) <= 13 ? "Low stock":"Normal Stock"
+                  }  
                 </p>
               </div>
               <FontAwesomeIcon

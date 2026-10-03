@@ -24,6 +24,7 @@ function AdminDashboard({orderRows,onStatusUpdate}) {
     productsInStock: 0,
     registeredUsers: 0,
     salesThisMonth: 0,
+    trends: {},
   });
 
   const [products, setProducts] = useState(null)
@@ -37,6 +38,7 @@ function AdminDashboard({orderRows,onStatusUpdate}) {
           productsInStock: response.data.productsInStock,
           registeredUsers: response.data.registeredUsers,
           salesThisMonth: response.data.salesThisMonth,
+          trends: response.data.trends || {},
         }));
       } catch (error) {
         console.error("Error fetching metrics:", error);
@@ -75,25 +77,28 @@ function AdminDashboard({orderRows,onStatusUpdate}) {
           icon={faCartShopping}
           label="Orders this month"
           value={metrics.ordersThisMonth}
-          change="12.8%"
+          trend={metrics.trends.orders}
+          change="vs last month"
         />
         <MetricCard
           icon={faBoxesStacked}
           label="Products in stock"
           value={metrics.productsInStock}
-          change="8.4%"
+          change="Current stock"
         />
         <MetricCard
           icon={faUsers}
           label="Registered users"
           value={metrics.registeredUsers}
-          change="6.2%"
+          trend={metrics.trends.registeredUsers}
+          change="vs last month"
         />
         <MetricCard
           icon={faArrowTrendUp}
           label="Sales this month"
           value={`₱${metrics.salesThisMonth.toLocaleString()}`}
-          change="14.6%"
+          trend={metrics.trends.salesThisMonth}
+          change="vs last month"
         />
       </div>
       <section className="mt-10">

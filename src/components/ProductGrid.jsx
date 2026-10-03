@@ -1,7 +1,7 @@
 import ProductCard from "./ProductCard";
 
 function ProductGrid({ products }) {
-  if (products.length === 0) {
+  if (products?.length === 0) {
     return (
       <div className="border-y border-zinc-200 py-20 text-center">
         <p className="text-lg font-medium">No products found.</p>
@@ -12,8 +12,8 @@ function ProductGrid({ products }) {
 
   return (
     <div className="grid grid-cols-1 gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+      {products?.map((product) => (
+        <ProductCard key={product._id} product={product} />
       ))}
     </div>
   );

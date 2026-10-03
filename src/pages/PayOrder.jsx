@@ -1,4 +1,5 @@
 import api from "@/middleware/apiMiddleware";
+import socket from "@/socket";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -6,7 +7,6 @@ import { toast } from "sonner";
 const PayOrder = () => {
   const { orderId } = useParams();
   const [orderData, setOrderData] = useState(null);
-  const [amount, setAmount] = useState("");
 
   useEffect(() => {
     const getOrderById = async () => {
@@ -19,20 +19,39 @@ const PayOrder = () => {
     };
 
     getOrderById();
+
+    socket.emit("join-order", orderId);
+
+    const handlePaymentSuccess = (data) => {
+      if (data.orderId === orderId) {
+        toast.success("Payment Successful!");
+
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 3000);
+      }
+    };
+
+    socket.on("payment-success", handlePaymentSuccess);
+
+    return () => {
+      socket.off("payment-success", handlePaymentSuccess);
+    };
   }, []);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
+
     try {
-        const pay = await api.patch("/payment/pay", {orderId:orderData?._id})
-        toast.success(pay.data.message)
-        setTimeout(()=>{
-            window.location.href = "/"
-        },2000)
+      const pay = await api.patch("/payment/pay", {
+        orderId: orderData?._id,
+      });
+
+      toast.success(pay.data.message);
     } catch (error) {
-        toast.error(error.data.message)
+      toast.error(error.response?.data?.message || "Payment failed");
     }
   };
-
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-5 py-12">
@@ -71,7 +90,6 @@ const PayOrder = () => {
             </p>
           </div>
 
-         
           <button
             type="submit"
             className="mt-6 w-full rounded-full bg-black py-4 text-sm font-semibold text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"

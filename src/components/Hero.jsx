@@ -4,7 +4,7 @@ function Hero() {
   return (
     <section className="bg-zinc-100">
       <div className="mx-auto grid min-h-[70vh] max-w-7xl grid-cols-1 items-center gap-10 px-5 py-14 sm:px-8 lg:grid-cols-2 lg:py-20">
-        <div className="order-2 lg:order-1">
+        <div className="hero-enter order-2 lg:order-1">
           <p className="mb-4 text-sm font-bold uppercase tracking-widest text-zinc-500">New season essentials</p>
           <h1 className="max-w-xl text-5xl font-black uppercase leading-none tracking-tighter sm:text-6xl lg:text-7xl">
             Move with purpose.
@@ -14,16 +14,16 @@ function Hero() {
           </p>
           <Link
             to="/shop"
-            className="mt-8 inline-block rounded-full bg-black px-7 py-3.5 font-medium text-white transition hover:bg-zinc-800"
+            className="mt-8 inline-block rounded-full bg-black px-7 py-3.5 font-medium text-white transition duration-300 hover:-translate-y-0.5 hover:bg-zinc-800"
           >
             Shop Now
           </Link>
         </div>
-        <div className="order-1 flex aspect-square items-center justify-center overflow-hidden lg:order-2">
+        <div className="hero-image order-1 flex aspect-square items-center justify-center overflow-hidden lg:order-2">
           <img
             src="/products/hero-shoe.png"
             alt="Nike running shoe"
-            className="h-full w-full object-contain"
+            className="h-full w-full object-contain transition-transform duration-700 ease-out hover:scale-105"
           />
         </div>
       </div>

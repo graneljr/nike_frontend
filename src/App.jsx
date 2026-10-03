@@ -123,7 +123,7 @@ function App() {
         />
          <Route
           path="/profile"
-          element={<Dashboard userData={userData} />}
+          element={<Dashboard userData={userData} setUserData={setUserData} />}
         />
           <Route
           path="/settings"

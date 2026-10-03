@@ -40,7 +40,7 @@ function Home() {
           </div>
           <Link
             to="/shop"
-            className="hidden text-sm font-medium underline underline-offset-4 hover:text-zinc-600 sm:block"
+            className="hidden text-sm font-medium underline underline-offset-4 transition-colors hover:text-zinc-600 sm:block"
           >
             View all
           </Link>
@@ -62,9 +62,9 @@ function Home() {
               <img
                 src={category.image}
                 alt=""
-                className="absolute inset-0 h-full w-full object-contain p-5 transition-transform duration-300 group-hover:scale-105"
+                className="absolute inset-0 h-full w-full object-contain p-5 transition-transform duration-500 ease-out group-hover:scale-105"
               />
-              <span className="relative rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white">
+              <span className="relative rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white transition-colors duration-300 group-hover:bg-zinc-800">
                 {category.name}
               </span>
             </Link>
@@ -85,7 +85,7 @@ function Home() {
           </p>
           <Link
             to="/shop"
-            className="mt-8 inline-block rounded-full bg-white px-7 py-3.5 font-medium text-black transition hover:bg-zinc-200"
+            className="mt-8 inline-block rounded-full bg-white px-7 py-3.5 font-medium text-black transition duration-300 hover:-translate-y-0.5 hover:bg-zinc-200"
           >
             Explore Collection
           </Link>

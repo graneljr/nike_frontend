@@ -3,11 +3,14 @@ import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowRight,
+  faArrowTrendDown,
   faArrowTrendUp,
   faBox,
+  faMinus,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { div } from "three/src/nodes/math/OperatorNode.js";
+import { formatter } from "@/utils/DateFormatter";
 
 const money = (amount) => `₱${Number(amount).toLocaleString()}`;
 
@@ -50,7 +53,7 @@ export function SectionTitle({ title, link, to }) {
 
 export function Status({ children }) {
   const color =
-    children === "Delivered" || children === "Active"
+      children === "Delivered" || children === "Received" || children === "Active"
       ? "bg-zinc-100 text-zinc-700"
       : children === "Shipped"
         ? "bg-zinc-200 text-zinc-800"
@@ -66,15 +69,38 @@ export function Status({ children }) {
   );
 }
 
-export function MetricCard({ icon, label, value, change }) {
+export function MetricCard({ icon, label, value, change, trend, trendPeriod = "vs last month" }) {
+  const hasTrend = typeof trend === "number" || trend === "new";
+  const trendIcon = trend === "new"
+    ? faArrowTrendUp
+    : trend > 0
+      ? faArrowTrendUp
+      : trend < 0
+        ? faArrowTrendDown
+        : faMinus;
+  const trendColor = trend === "new" || trend > 0
+    ? "text-emerald-700"
+    : trend < 0
+      ? "text-red-600"
+      : "text-zinc-500";
+  const trendValue = !hasTrend
+    ? ""
+    : trend === "new"
+      ? "New"
+      : `${trend > 0 ? "+" : ""}${trend.toFixed(1)}%`;
+
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-5 sm:p-6">
       <div className="flex items-start justify-between">
         <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700">
           <FontAwesomeIcon icon={icon} />
         </span>
-        <span className="flex items-center gap-1 text-xs font-semibold text-zinc-500">
-          <FontAwesomeIcon icon={faArrowTrendUp} /> {change}
+        <span className={`flex items-center gap-1 text-xs font-semibold ${hasTrend ? trendColor : "text-zinc-500"}`}>
+          {hasTrend ? (
+            <>
+              <FontAwesomeIcon icon={trendIcon} /> {trendValue} · {trendPeriod}
+            </>
+          ) : change}
         </span>
       </div>
       <p className="mt-5 text-sm text-zinc-500">{label}</p>
@@ -140,7 +166,9 @@ function OrderDetailsModal({ order, onClose }) {
       <div className="flex items-center justify-between border-b border-zinc-200 pb-5">
         <div>
           <p className="text-xs text-zinc-500">Order date</p>
-          <p className="mt-1 text-sm font-semibold">{order?.createdAt}</p>
+          <p className="mt-1 text-sm font-semibold"> {formatter
+                      .format(new Date(order?.createdAt))
+                      .replace(",", "")}</p>
         </div>
         <Status>{order?.status}</Status>
       </div>
@@ -148,6 +176,24 @@ function OrderDetailsModal({ order, onClose }) {
         <div className="border-b border-zinc-200 py-5">
           <p className="text-xs text-zinc-500">Customer</p>
           <p className="mt-1 text-sm font-semibold">{order?.userId?.fullName}</p>
+        </div>
+      )}
+         {order?.paymentMethod && (
+        <div className="border-b border-zinc-200 py-5">
+          <p className="text-xs text-zinc-500">Payment Method</p>
+          <p className="mt-1 text-sm font-semibold">{order?.paymentMethod}</p>
+        </div>
+      )}
+      {order?.status && (
+        <div className="border-b border-zinc-200 py-5">
+          <p className="text-xs text-zinc-500">Order Status</p>
+          <p className="mt-1 text-sm font-semibold">{order?.status}</p>
+        </div>
+      )}
+          {order?.paymentStatus && (
+        <div className="border-b border-zinc-200 py-5">
+          <p className="text-xs text-zinc-500">Payment Status</p>
+          <p className="mt-1 text-sm font-semibold">{order?.paymentStatus}</p>
         </div>
       )}
       <div className="border-b border-zinc-200 py-5">
@@ -196,7 +242,7 @@ function OrderDetailsModal({ order, onClose }) {
   );
 }
 
-export function OrdersTable({ admin = false, rows, onStatusUpdate }) {
+export function OrdersTable({ admin = false, rows, onStatusUpdate, onCustomerStatusUpdate }) {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [statusOrder, setStatusOrder] = useState(null);
   const [nextStatus, setNextStatus] = useState("");
@@ -254,6 +300,7 @@ export function OrdersTable({ admin = false, rows, onStatusUpdate }) {
                         </button>
                         {admin && onStatusUpdate && (
                           <button
+                            disabled={order?.status === "received" || order?.status === "cancelled"}
                             type="button"
                             onClick={() => {
                               setStatusOrder(order);
@@ -262,6 +309,32 @@ export function OrdersTable({ admin = false, rows, onStatusUpdate }) {
                             className="whitespace-nowrap rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-bold text-zinc-700 transition hover:bg-zinc-200 hover:text-black"
                           >
                             Update status
+                          </button>
+                        )}
+                        {!admin && onCustomerStatusUpdate && order?.status === "Processing" && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm("Cancel this processing order?")) {
+                                onCustomerStatusUpdate(order._id, "cancelled");
+                              }
+                            }}
+                            className="whitespace-nowrap rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-bold transition hover:border-red-600 hover:text-red-600"
+                          >
+                            Cancel order
+                          </button>
+                        )}
+                        {!admin && onCustomerStatusUpdate && order?.status.toLowerCase() === "shipped" && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm("Confirm that you received this order?")) {
+                                onCustomerStatusUpdate(order._id, "received");
+                              }
+                            }}
+                            className="whitespace-nowrap rounded-full bg-black px-3 py-1.5 text-xs font-bold text-white transition hover:bg-zinc-800"
+                          >
+                            Mark received
                           </button>
                         )}
                       </div>
@@ -304,7 +377,7 @@ export function OrdersTable({ admin = false, rows, onStatusUpdate }) {
                 onChange={(event) => setNextStatus(event.target.value)}
                 className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm outline-none focus:border-black"
               >
-                {["Pending","Processing", "Shipped", "Delivered", "Cancelled"].map(
+                {["Pending","Processing", "Shipped", "Delivered", "Received", "Cancelled"].map(
                   (status) => (
                     <option key={status.toLocaleLowerCase()}>{status}</option>
                   ),

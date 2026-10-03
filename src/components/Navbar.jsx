@@ -9,7 +9,7 @@ function Navbar({ cartCount, userData }) {
   return (
     <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white">
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
-        <NavLink to="/" className="text-xl font-black italic tracking-tighter" aria-label="Nike Minimal Store home">
+        <NavLink to="/" className="text-xl font-black italic tracking-tighter transition-transform duration-300 hover:scale-105" aria-label="Nike Minimal Store home">
           NIKE
         </NavLink>
         <div className="flex items-center gap-6 sm:gap-9">
@@ -19,7 +19,7 @@ function Navbar({ cartCount, userData }) {
           userData ? <NavLink to="dashboard" className={linkClass}>D</NavLink>:  <NavLink to="/register" className={linkClass}>Sign in</NavLink>
         }
           <NavLink to="/cart" className={linkClass}>
-            Cart <span className="ml-1 rounded-full bg-black px-2 py-1 text-xs text-white">{cartCount}</span>
+            Cart <span className="ml-1 rounded-full bg-black px-2 py-1 text-xs text-white transition-transform duration-300 hover:scale-110">{cartCount}</span>
           </NavLink>
         </div>
       </nav>

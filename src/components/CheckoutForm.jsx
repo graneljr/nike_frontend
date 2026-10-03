@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCreditCard, faMoneyBillWave } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCreditCard,
+  faMoneyBillWave,
+} from "@fortawesome/free-solid-svg-icons";
 import api from "@/middleware/apiMiddleware";
-
+import socket from "@/socket";
+import { toast } from "sonner";
 const emptyForm = { address: "", instructions: "" };
 const paymentMethods = [
   {
@@ -26,13 +30,17 @@ function CheckoutForm({ cart }) {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [message, setMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
+  const [orderId, setOrderId] = useState(null);
 
-  function handleChange (event) {
-    setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
+  function handleChange(event) {
+    setForm((current) => ({
+      ...current,
+      [event.target.name]: event.target.value,
+    }));
     setMessage("");
   }
 
-const  handleSubmit =  async (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (cartIsEmpty) {
@@ -43,37 +51,78 @@ const  handleSubmit =  async (event) => {
       setMessage("Enter a delivery address to continue.");
     } else {
       setIsSuccess(true);
-      const selectedMethod = paymentMethods.find((method) => method.id === paymentMethod)?.title;
-      setMessage(`Details validated. ${selectedMethod} selected; no order was placed.`);
+      const selectedMethod = paymentMethods.find(
+        (method) => method.id === paymentMethod,
+      )?.title;
+      setMessage(
+        `Details validated. ${selectedMethod} selected; no order was placed.`,
+      );
     }
-    const orderDetails = cart.map((item) => { return { productId: item._id, quantity: item.quantity, size: item.size}; });
+    const orderDetails = cart.map((item) => {
+      return { productId: item._id, quantity: item.quantity, size: item.size };
+    });
 
     const ordernow = await api.post("/orders", {
       orderDetails: orderDetails,
-      paymentMethod: paymentMethod 
+      paymentMethod: paymentMethod,
     });
-    console.log("Order placed successfully. Order ID:", ordernow.data);
-    if(paymentMethod === "online") {
+    if (paymentMethod === "online") {
       const paymentData = await api.post("/payment/process_payment", {
         orderId: ordernow.data.orderId,
       });
       setPayment(paymentData.data);
+      setOrderId(ordernow.data.orderId);
+      setPayment(paymentData.data);
+      socket.emit("join-order", ordernow.data.orderId);
     }
   }
+  useEffect(() => {
+    const handlePaymentSuccess = (data) => {
+      console.log("PAYMENT SUCCESS EVENT:", data);
 
+      if (data.orderId === orderId) {
+        console.log("Correct order payment received!");
+        toast.success("Payment Sucessful");
+        setMessage("Payment successful!");
+        setIsSuccess(true);
+
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 3000);
+      }
+    };
+
+    socket.on("payment-success", handlePaymentSuccess);
+
+    return () => {
+      socket.off("payment-success", handlePaymentSuccess);
+    };
+  }, [orderId]);
   return (
-    <form onSubmit={handleSubmit} className="mt-8 border-t border-zinc-200 pt-7" noValidate>
+    <form
+      onSubmit={handleSubmit}
+      className="mt-8 border-t border-zinc-200 pt-7"
+      noValidate
+    >
       <div className="flex items-center gap-3">
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black text-xs font-bold text-white">1</span>
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black text-xs font-bold text-white">
+          1
+        </span>
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Delivery</p>
-          <h2 className="mt-0.5 text-lg font-bold tracking-tight">Where should we send it?</h2>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+            Delivery
+          </p>
+          <h2 className="mt-0.5 text-lg font-bold tracking-tight">
+            Where should we send it?
+          </h2>
         </div>
       </div>
 
       <div className="mt-5 space-y-3">
         <label className="block">
-          <span className="mb-2 block text-xs font-semibold text-zinc-700">Delivery address <span className="text-zinc-400">· required</span></span>
+          <span className="mb-2 block text-xs font-semibold text-zinc-700">
+            Delivery address <span className="text-zinc-400">· required</span>
+          </span>
           <textarea
             name="address"
             value={form.address}
@@ -87,7 +136,10 @@ const  handleSubmit =  async (event) => {
           />
         </label>
         <label className="block">
-          <span className="mb-2 block text-xs font-semibold text-zinc-700">Delivery instructions <span className="font-normal text-zinc-400">· optional</span></span>
+          <span className="mb-2 block text-xs font-semibold text-zinc-700">
+            Delivery instructions{" "}
+            <span className="font-normal text-zinc-400">· optional</span>
+          </span>
           <input
             name="instructions"
             value={form.instructions}
@@ -100,10 +152,14 @@ const  handleSubmit =  async (event) => {
 
       <fieldset className="mt-7 border-t border-zinc-200 pt-6">
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-200 text-xs font-bold text-zinc-700">2</span>
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-200 text-xs font-bold text-zinc-700">
+            2
+          </span>
           <div>
             <legend className="text-sm font-bold">Payment method</legend>
-            <p className="mt-0.5 text-xs text-zinc-500">Select your preferred option.</p>
+            <p className="mt-0.5 text-xs text-zinc-500">
+              Select your preferred option.
+            </p>
           </div>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-2">
@@ -113,7 +169,9 @@ const  handleSubmit =  async (event) => {
               <label
                 key={method.id}
                 className={`relative flex cursor-pointer flex-col items-start gap-3 rounded-xl border p-3.5 transition ${
-                  isSelected ? "border-black bg-white ring-1 ring-black" : "border-zinc-200 bg-white hover:border-zinc-400"
+                  isSelected
+                    ? "border-black bg-white ring-1 ring-black"
+                    : "border-zinc-200 bg-white hover:border-zinc-400"
                 }`}
               >
                 <input
@@ -127,12 +185,19 @@ const  handleSubmit =  async (event) => {
                   }}
                   className="absolute right-3 top-3 h-4 w-4 accent-black"
                 />
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700" aria-hidden="true">
+                <span
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700"
+                  aria-hidden="true"
+                >
                   <FontAwesomeIcon icon={method.icon} />
                 </span>
                 <span className="min-w-0 pr-4">
-                  <span className="block text-sm font-semibold">{method.title}</span>
-                  <span className="mt-1 block text-[11px] leading-4 text-zinc-500">{method.description}</span>
+                  <span className="block text-sm font-semibold">
+                    {method.title}
+                  </span>
+                  <span className="mt-1 block text-[11px] leading-4 text-zinc-500">
+                    {method.description}
+                  </span>
                 </span>
               </label>
             );
@@ -141,7 +206,10 @@ const  handleSubmit =  async (event) => {
       </fieldset>
 
       {message && (
-        <p className={`mt-4 rounded-lg px-3.5 py-3 text-sm ${isSuccess ? "bg-zinc-100 text-zinc-700" : "bg-red-50 text-red-700"}`} role="status">
+        <p
+          className={`mt-4 rounded-lg px-3.5 py-3 text-sm ${isSuccess ? "bg-zinc-100 text-zinc-700" : "bg-red-50 text-red-700"}`}
+          role="status"
+        >
           {message}
         </p>
       )}
@@ -149,24 +217,24 @@ const  handleSubmit =  async (event) => {
         type="submit"
         className="mt-6 w-full rounded-full bg-black py-4 text-sm font-semibold text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
       >
-       {
-        paymentMethod === "online" ? "Proceed to payment" : "Place order"
-       }
+        {paymentMethod === "online" ? "Proceed to payment" : "Place order"}
       </button>
       <p className="mt-3 text-center text-[11px] leading-5 text-zinc-500">
         Checkout is a preview and does not place orders or collect payments yet.
       </p>
-      {
-        payment && (
-         <div className="absolute inset-0 z-[999] flex items-center justify-center bg-black/50">
-           <div className="mt-4 rounded-lg bg-zinc-100 p-4 text-sm text-zinc-700">
+      {payment && (
+        <div className="absolute inset-0 z-[999] flex items-center justify-center bg-black/50">
+          <div className="mt-4 rounded-lg bg-zinc-100 p-4 text-sm text-zinc-700">
             <p>Payment QR Code:</p>
-            <img src={payment.qrCode} alt="Payment QR Code" className="mt-2 w-32 h-32" />
+            <img
+              src={payment.qrCode}
+              alt="Payment QR Code"
+              className="mt-2 w-32 h-32"
+            />
             <p className="mt-2">Amount: ₱{payment.amount.toLocaleString()}</p>
           </div>
-         </div>
-        )
-      }
+        </div>
+      )}
     </form>
   );
 }

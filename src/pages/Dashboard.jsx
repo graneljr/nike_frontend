@@ -11,7 +11,7 @@ import api from "@/middleware/apiMiddleware";
 import { toast } from "sonner";
 
 
-function Dashboard({ userData }) {
+function Dashboard({ userData, setUserData }) {
   const { pathname } = useLocation();
   const isAdmin = userData?.role === "admin";
   const [latestOrders, setLatestOrders] = useState(null);
@@ -34,13 +34,17 @@ function Dashboard({ userData }) {
         status: status.toLowerCase(),
       });
       toast.success(updateStatus.data.message);
+      return true;
     } catch (error) {
-      toast.error(error.data.message);
+      toast.error(error.response?.data?.message || "Unable to update order status.");
+      return false;
     }
   };
 
   let page;
-  if (pathname === "/profile") page = <ProfilePage userData={userData} />;
+  if (pathname === "/profile") {
+    page = <ProfilePage userData={userData} setUserData={setUserData} />;
+  }
   else if (pathname === "/settings") page = <SettingsPage />;
   else if (pathname === "/orders" || pathname === "/view_orders") {
     page = (
@@ -59,7 +63,7 @@ function Dashboard({ userData }) {
         onStatusUpdate={updateOrderStatus}
       />
     );
-  else page = <UserDashboard userData={userData} orderRows={latestOrders} />;
+  else page = <UserDashboard userData={userData} />;
 
   return (
     <div className="min-h-[calc(100vh-130px)] px-5 py-7 sm:px-8 sm:py-9 xl:px-12">

@@ -1,4 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useEffect, useState } from "react";
 import {
   faArrowRight,
   faBox,
@@ -6,18 +7,83 @@ import {
   faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
-import products from "../data/products";
 import {
   MetricCard,
   OrdersTable,
   PageHeading,
   SectionTitle,
 } from "../components/dashboard/DashboardUI";
+import api from "@/middleware/apiMiddleware";
+import { toast } from "sonner";
 
 const money = (amount) => `₱${Number(amount).toLocaleString()}`;
 
-function UserDashboard({ userData, orderRows }) {
+function UserDashboard({ userData }) {
   const name = userData?.fullName?.split(" ")[0] || "there";
+  const [dashboardData, setDashboardData] = useState({
+    orders: [],
+    totalOrders: 0,
+    onTheWay: 0,
+    ordersThisMonth: 0,
+    trends: {},
+  });
+  const [products, setProducts] = useState([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+
+  useEffect(() => {
+    const loadOrders = async () => {
+      try {
+        const response = await api.get("/orders/my-orders");
+        setDashboardData((current) => ({ ...current, ...response.data }));
+      } catch (error) {
+        toast.error(error.response?.data?.message || "Unable to load your dashboard orders.");
+      } finally {
+        setIsLoadingOrders(false);
+      }
+    };
+    const loadProducts = async () => {
+      try {
+        const response = await api.get("/products");
+        setProducts(response.data);
+      } catch (error) {
+        toast.error(error.response?.data?.message || "Unable to load products.");
+      }
+    };
+
+    loadOrders();
+    loadProducts();
+  }, []);
+
+  const recentOrders = dashboardData.orders.map((order) => ({
+    ...order,
+    status: order.status?.charAt(0).toUpperCase() + order.status?.slice(1),
+    createdAt: order.createdAt
+      ? new Date(order.createdAt).toLocaleDateString()
+      : "—",
+  }));
+  const memberSince = userData?.createdAt
+    ? new Date(userData.createdAt).getFullYear()
+    : "—";
+  const updateCustomerOrderStatus = async (orderId, status) => {
+    try {
+      const response = await api.patch(`/orders/my-orders/${orderId}/status`, { status });
+      setDashboardData((current) => ({
+        ...current,
+        orders: current.orders.map((order) =>
+          order._id === orderId
+            ? { ...order, status: response.data.order.status }
+            : order,
+        ),
+        onTheWay: status === "received"
+          ? Math.max(0, current.onTheWay - 1)
+          : current.onTheWay,
+      }));
+      toast.success(response.data.message);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Unable to update this order.");
+    }
+  };
+
   return (
     <>
       <PageHeading
@@ -37,19 +103,20 @@ function UserDashboard({ userData, orderRows }) {
         <MetricCard
           icon={faCartShopping}
           label="Total orders"
-          value="04"
-          change="2 this month"
+          value={dashboardData.totalOrders.toLocaleString()}
+          trend={dashboardData.trends?.totalOrders}
+          change="vs last month"
         />
         <MetricCard
           icon={faBox}
           label="On the way"
-          value="01"
-          change="Arriving soon"
+          value={dashboardData.onTheWay.toLocaleString()}
+          change="Shipped orders"
         />
         <MetricCard
           icon={faUsers}
           label="Member since"
-          value="2024"
+          value={memberSince}
           change="Nike member"
         />
       </div>
@@ -59,7 +126,24 @@ function UserDashboard({ userData, orderRows }) {
           link="View all orders"
           to="/orders"
         />
-        <OrdersTable rows={orderRows?.slice(0, 2)} />
+        {isLoadingOrders ? (
+          <div className="rounded-xl border border-zinc-200 px-5 py-10 text-center text-sm text-zinc-500">
+            Loading your orders…
+          </div>
+        ) : recentOrders.length ? (
+          <OrdersTable
+            rows={recentOrders.slice(0, 2)}
+            onCustomerStatusUpdate={updateCustomerOrderStatus}
+          />
+        ) : (
+          <div className="rounded-xl border border-dashed border-zinc-300 px-5 py-10 text-center">
+            <p className="font-semibold">No orders yet.</p>
+            <p className="mt-1 text-sm text-zinc-500">Your orders will show here after checkout.</p>
+            <Link to="/shop" className="mt-4 inline-flex rounded-full bg-black px-4 py-2 text-xs font-bold text-white hover:bg-zinc-800">
+              Browse the shop
+            </Link>
+          </div>
+        )}
       </section>
       <section className="mt-10">
         <SectionTitle
@@ -70,8 +154,8 @@ function UserDashboard({ userData, orderRows }) {
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {products.slice(0, 4).map((product) => (
             <Link
-              to={`/product/${product.id}`}
-              key={product.id}
+              to={`/product/${product._id}`}
+              key={product._id}
               className="group overflow-hidden rounded-xl bg-zinc-100"
             >
               <div className="aspect-square overflow-hidden">

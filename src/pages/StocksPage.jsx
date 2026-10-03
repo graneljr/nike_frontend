@@ -13,30 +13,36 @@ import {
 } from "../components/dashboard/DashboardUI";
 import api from "@/middleware/apiMiddleware";
 import { toast } from "sonner";
+import { percentageChange } from "@/utils/percentageChange";
 
 const money = (amount) => `₱${Number(amount).toLocaleString()}`;
-function StockDetailsModal({ item, onClose, onUpdateQuantity, onAddSize }) {
-  const [quantity, setQuantity] = useState(item?.quantity ?? 0);
+function StockDetailsModal({ item, onClose, onUpdateSize, onAddSize }) {
+  const [sizeValues, setSizeValues] = useState({});
   const [newSize, setNewSize] = useState("");
   const [newSizePrice, setNewSizePrice] = useState("");
   const [newSizeQuantity, setNewSizeQuantity] = useState("");
   const [isAddingSize, setIsAddingSize] = useState(false);
+  const [savingSizeId, setSavingSizeId] = useState(null);
   useEffect(
-    () => setQuantity(item?.quantity ?? 0),
-    [item?._id, item?.quantity],
+    () => setSizeValues(Object.fromEntries(
+      (item?.size ?? []).map((entry) => [entry._id, {
+        price: String(entry.price ?? 0),
+        quantity: String(entry.quantity ?? 0),
+      }]),
+    )),
+    [item?._id, item?.size],
   );
   if (!item) return null;
 
+  const sizes = Array.isArray(item.size) ? item.size : [];
   const details = [
     ["Category", item.category],
     ["Price", money(item.price)],
     [
       "Available pairs",
-      item.size.reduce((total, entry) => total + entry.quantity, 0),
+      sizes.reduce((total, entry) => total + (Number(entry.quantity) || 0), 0),
     ],
   ];
-  const sizes = item.size || [];
-
   const handleAddSize = async (event) => {
     event.preventDefault();
     setIsAddingSize(true);
@@ -82,15 +88,75 @@ function StockDetailsModal({ item, onClose, onUpdateQuantity, onAddSize }) {
         {sizes.length > 0 ? (
           <div className="mt-3 divide-y divide-zinc-100">
             {sizes.map((entry) => (
-              <div
+              <form
                 key={entry._id || entry.size}
-                className="flex items-center justify-between py-2 text-sm"
+                onSubmit={async (event) => {
+                  event.preventDefault();
+                  setSavingSizeId(entry._id);
+                  await onUpdateSize(
+                    item._id,
+                    entry._id,
+                    {
+                      price: Number(sizeValues[entry._id]?.price),
+                      quantity: Math.max(0, Number(sizeValues[entry._id]?.quantity)),
+                    },
+                  );
+                  setSavingSizeId(null);
+                }}
+                className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
               >
-                <span className="font-semibold">{entry.size}</span>
-                <span className="text-zinc-600">
-                  {money(entry.price)} · {entry.quantity} pairs
-                </span>
-              </div>
+                <div className="min-w-16">
+                  <p className="font-semibold">{entry.size}</p>
+                </div>
+                <label className="flex items-center gap-2 text-xs text-zinc-500">
+                  Price
+                  <span className="flex items-center rounded-lg border border-zinc-200 pl-2 text-sm text-zinc-900 focus-within:border-black">
+                    ₱
+                    <input
+                      aria-label={`Price for size ${entry.size}`}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      required
+                      value={sizeValues[entry._id]?.price ?? entry.price}
+                      onChange={(event) => setSizeValues((current) => ({
+                        ...current,
+                        [entry._id]: {
+                          ...current[entry._id],
+                          price: event.target.value,
+                        },
+                      }))}
+                      className="w-24 rounded-r-lg px-2 py-1.5 text-sm outline-none"
+                    />
+                  </span>
+                </label>
+                <label className="flex items-center gap-2 text-xs text-zinc-500">
+                  Pairs
+                  <input
+                    aria-label={`Quantity for size ${entry.size}`}
+                    type="number"
+                    min="0"
+                    step="1"
+                    required
+                    value={sizeValues[entry._id]?.quantity ?? entry.quantity}
+                    onChange={(event) => setSizeValues((current) => ({
+                      ...current,
+                      [entry._id]: {
+                        ...current[entry._id],
+                        quantity: event.target.value,
+                      },
+                    }))}
+                    className="w-20 rounded-lg border border-zinc-200 px-2 py-1.5 text-sm text-zinc-900 outline-none focus:border-black"
+                  />
+                </label>
+                <button
+                  type="submit"
+                  disabled={savingSizeId === entry._id}
+                  className="rounded-full bg-black px-3 py-1.5 text-xs font-bold text-white transition hover:bg-zinc-800 disabled:opacity-60"
+                >
+                  {savingSizeId === entry._id ? "Saving…" : "Save"}
+                </button>
+              </form>
             ))}
           </div>
         ) : (
@@ -148,38 +214,6 @@ function StockDetailsModal({ item, onClose, onUpdateQuantity, onAddSize }) {
         </form>
       </section>
 
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          onUpdateQuantity(item.id, Math.max(0, Number(quantity)));
-          onClose();
-        }}
-        className="mt-5 rounded-xl border border-zinc-200 p-4"
-      >
-        <label htmlFor="stock-quantity" className="block text-sm font-bold">
-          Update quantity
-        </label>
-        <p className="mt-1 text-xs leading-5 text-zinc-500">
-          Set the number of pairs currently available for this product.
-        </p>
-        <div className="mt-3 flex gap-2">
-          <input
-            id="stock-quantity"
-            type="number"
-            min="0"
-            step="1"
-            value={quantity}
-            onChange={(event) => setQuantity(event.target.value)}
-            className="min-w-0 flex-1 rounded-lg border border-zinc-200 px-3 py-2.5 text-sm outline-none focus:border-black"
-          />
-          <button
-            type="submit"
-            className="rounded-full bg-black px-4 py-2.5 text-xs font-bold text-white transition hover:bg-zinc-800"
-          >
-            Save quantity
-          </button>
-        </div>
-      </form>
       <button
         type="button"
         onClick={onClose}
@@ -451,32 +485,49 @@ function StocksPage() {
   const lowStockCount = stockItems.filter(
     (item) => item.size.reduce((sum, entry) => sum + entry.quantity, 0) <= 12,
   ).length;
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const productsBeforeThisMonth = stockItems.filter(
+    (item) => item.createdAt && new Date(item.createdAt) < monthStart,
+  ).length;
+  const productsListedTrend = percentageChange(
+    stockItems.length,
+    productsBeforeThisMonth,
+  );
 
-  const updateQuantity = (id, quantity) => {
-    setStockItems((current) =>
-      current.map((item) => (item.id === id ? { ...item, quantity } : item)),
-    );
+  const updateSize = async (id, sizeId, sizeData) => {
+    try {
+      const response = await api.patch(
+        `/products/${id}/sizes/${sizeId}`,
+        sizeData,
+      );
+      const product = response.data.product;
+      setStockItems((current) =>
+        current.map((item) => item._id === id ? product : item),
+      );
+      setSelectedStock((current) => current?._id === id ? product : current);
+      toast.success(response.data.message || "Size updated successfully");
+      return true;
+    } catch (error) {
+      toast.error(
+        error.response?.data?.error || "Failed to update size. Please try again.",
+      );
+      return false;
+    }
   };
 
   const addSize = async (id, sizeData) => {
     try {
       const response = await api.post(`/products/${id}/sizes`, sizeData);
       const product = response.data.product;
-      const quantity = product.size.reduce(
-        (total, entry) => total + entry.quantity,
-        0,
-      );
       setStockItems((current) =>
         current.map((item) =>
-          item.id === id
-            ? { ...item, ...product, id: product._id, quantity }
-            : item,
+          item._id === id ? product : item,
         ),
       );
       setSelectedStock((current) =>
-        current?.id === id
-          ? { ...current, ...product, id: product._id, size: product.size }
-          : current,
+        current?._id === id ? product : current,
       );
       toast.success(response.data.message || "Size added successfully");
       return product;
@@ -510,13 +561,13 @@ function StocksPage() {
           icon={faBoxesStacked}
           label="Products listed"
           value={stockItems.length}
-          change="In catalog"
+          trend={productsListedTrend}
         />
         <MetricCard
           icon={faBox}
           label="Pairs in stock"
           value={totalPairs.toLocaleString()}
-          change="All sizes"
+          change="Current inventory"
         />
         <MetricCard
           icon={faArrowTrendUp}
@@ -542,7 +593,7 @@ function StocksPage() {
             </thead>
             <tbody className="divide-y divide-zinc-100">
               {stockItems.map((item) => (
-                <tr key={item.id}>
+                <tr key={item._id}>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
                       <img
@@ -612,7 +663,7 @@ function StocksPage() {
       <StockDetailsModal
         item={selectedStock}
         onClose={() => setSelectedStock(null)}
-        onUpdateQuantity={updateQuantity}
+        onUpdateSize={updateSize}
         onAddSize={addSize}
       />
     </>

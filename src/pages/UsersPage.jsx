@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { AnimatePresence } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBox,
@@ -152,10 +153,15 @@ function UsersPage() {
           </table>
         </div>
       </div>
-      <MemberDetailsModal
-        member={selectedMember}
-        onClose={() => setSelectedMember(null)}
-      />
+      <AnimatePresence>
+        {selectedMember && (
+          <MemberDetailsModal
+            key={selectedMember._id ?? selectedMember.email}
+            member={selectedMember}
+            onClose={() => setSelectedMember(null)}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }

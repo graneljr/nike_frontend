@@ -5,6 +5,7 @@ import CategoryFilter from "../components/CategoryFilter";
 import ProductGrid from "../components/ProductGrid";
 import api from "@/middleware/apiMiddleware";
 import { toast } from "sonner";
+
 function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
@@ -24,25 +25,33 @@ function Shop() {
   useEffect(() => {
     const getProductByCategory = async () => {
       try {
-        const product = await api.get(`/products/${selectedCategory}`);
-        setProducts([product]);
+        
+        const endpoint =
+          selectedCategory === "All"
+            ? "/products"
+            : `/products/${selectedCategory.toLowerCase()}`;
+            
+        const response = await api.get(endpoint);
+        const productList = Array.isArray(response) ? response : response?.data || [];
+        setProducts(productList);
       } catch (error) {
         toast.error(error?.data?.message || "Something went wrong");
+        setProducts([]);
       }
     };
     getProductByCategory();
   }, [selectedCategory]);
+  const filteredProducts = (Array.isArray(products) ? products : []).filter((product) => {
+    const matchesSearch = product?.name
+      ?.toLowerCase()
+      .includes(searchQuery.toLowerCase()) ?? false;
+    const matchesCategory =
+      selectedCategory === "All" ||
+      product?.category?.toLowerCase() === selectedCategory.toLowerCase();
 
-  const filteredProducts = products.filter((product) => {
-  const matchesSearch = product?.name
-    ?.toLowerCase()
-    .includes(searchQuery.toLowerCase()) ?? false;
+    return matchesSearch && matchesCategory;
+  });
 
-  const matchesCategory =
-    selectedCategory === "All" || product?.category === selectedCategory.toLocaleLowerCase();
-
-  return matchesSearch && matchesCategory;
-}) ?? [];
   return (
     <section className="mx-auto min-h-[70vh] max-w-7xl px-5 py-14 sm:px-8 sm:py-20">
       <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">
@@ -59,7 +68,7 @@ function Shop() {
         />
       </div>
       <p className="mb-6 text-sm text-zinc-500">
-        {filteredProducts?.length} products
+        {filteredProducts.length} products
       </p>
       <ProductGrid products={filteredProducts} />
     </section>

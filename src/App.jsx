@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
@@ -18,7 +18,6 @@ import PayOrder from "./pages/PayOrder";
 function App() {
   const [cart, setCart] = useState([]);
   const [userData, setUserData] = useState(null);
-
   useEffect(() => {
     applyDisplaySettings(getDisplaySettings());
     const getCurrentUser = async () => {

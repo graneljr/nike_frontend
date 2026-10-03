@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowTrendUp,
@@ -650,22 +651,28 @@ function StocksPage() {
         </div>
       </div>
 
-      {isAddModalOpen && (
-        <AddStockModal
-          onClose={(product) => {
-            setIsAddModalOpen(false);
-            if (product) {
-              setStockItems((current) => [...current, product]);
-            }
-          }}
-        />
-      )}
-      <StockDetailsModal
-        item={selectedStock}
-        onClose={() => setSelectedStock(null)}
-        onUpdateSize={updateSize}
-        onAddSize={addSize}
-      />
+      <AnimatePresence>
+        {isAddModalOpen && (
+          <AddStockModal
+            key="add-stock"
+            onClose={(product) => {
+              setIsAddModalOpen(false);
+              if (product) {
+                setStockItems((current) => [...current, product]);
+              }
+            }}
+          />
+        )}
+        {selectedStock && (
+          <StockDetailsModal
+            key={selectedStock._id}
+            item={selectedStock}
+            onClose={() => setSelectedStock(null)}
+            onUpdateSize={updateSize}
+            onAddSize={addSize}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }

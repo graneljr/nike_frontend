@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   faArrowRight,
   faArrowTrendDown,
@@ -110,6 +111,9 @@ export function MetricCard({ icon, label, value, change, trend, trendPeriod = "v
 }
 
 export function Modal({ eyebrow, title, onClose, children }) {
+  const prefersReducedMotion = useReducedMotion();
+  const reduceMotion = prefersReducedMotion || document.documentElement.dataset.reduceMotion === "true";
+
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.key === "Escape") onClose();
@@ -119,17 +123,25 @@ export function Modal({ eyebrow, title, onClose, children }) {
   }, [onClose]);
 
   return (
-    <div
+    <motion.div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-5"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: reduceMotion ? 0.01 : 0.18, ease: "easeOut" }}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <section
+      <motion.section
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
         className="max-h-[90vh] w-full overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl sm:max-w-lg sm:rounded-2xl sm:p-7"
+        initial={{ opacity: 0, y: reduceMotion ? 0 : 18, scale: reduceMotion ? 1 : 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: reduceMotion ? 0 : 10, scale: reduceMotion ? 1 : 0.98 }}
+        transition={{ duration: reduceMotion ? 0.01 : 0.2, ease: [0.22, 1, 0.36, 1] }}
       >
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -153,8 +165,8 @@ export function Modal({ eyebrow, title, onClose, children }) {
           </button>
         </div>
         <div className="mt-6">{children}</div>
-      </section>
-    </div>
+      </motion.section>
+    </motion.div>
   );
 }
 
@@ -348,16 +360,23 @@ export function OrdersTable({ admin = false, rows, onStatusUpdate, onCustomerSta
           </table>
         </div>
       </div>
-      <OrderDetailsModal
-        order={selectedOrder}
-        onClose={() => setSelectedOrder(null)}
-      />
-      {statusOrder && (
-        <Modal
-          eyebrow="Order management"
-          title={`Update ${statusOrder._id}`}
-          onClose={() => setStatusOrder(null)}
-        >
+      <AnimatePresence>
+        {selectedOrder && (
+          <OrderDetailsModal
+            key={selectedOrder._id}
+            order={selectedOrder}
+            onClose={() => setSelectedOrder(null)}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {statusOrder && (
+          <Modal
+            key={statusOrder._id}
+            eyebrow="Order management"
+            title={`Update ${statusOrder._id}`}
+            onClose={() => setStatusOrder(null)}
+          >
           <form
             onSubmit={(event) => {
               event.preventDefault();
@@ -400,8 +419,9 @@ export function OrdersTable({ admin = false, rows, onStatusUpdate, onCustomerSta
               </button>
             </div>
           </form>
-        </Modal>
-      )}
+          </Modal>
+        )}
+      </AnimatePresence>
     </>
   );
 }

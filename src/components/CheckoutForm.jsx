@@ -31,6 +31,7 @@ function CheckoutForm({ cart }) {
   const [message, setMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderId, setOrderId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleChange(event) {
     setForm((current) => ({
@@ -45,35 +46,44 @@ function CheckoutForm({ cart }) {
 
     if (cartIsEmpty) {
       setIsSuccess(false);
-      setMessage("Add a product to your cart before checkout.");
-    } else if (!form.address.trim()) {
+      setMessage("Select at least one item to continue.");
+      return;
+    }
+    if (!form.address.trim()) {
       setIsSuccess(false);
       setMessage("Enter a delivery address to continue.");
-    } else {
-      setIsSuccess(true);
-      const selectedMethod = paymentMethods.find(
-        (method) => method.id === paymentMethod,
-      )?.title;
-      setMessage(
-        `Details validated. ${selectedMethod} selected; no order was placed.`,
-      );
+      return;
     }
-    const orderDetails = cart.map((item) => {
-      return { productId: item._id, quantity: item.quantity, size: item.size };
-    });
 
-    const ordernow = await api.post("/orders", {
-      orderDetails: orderDetails,
-      paymentMethod: paymentMethod,
-    });
-    if (paymentMethod === "online") {
-      const paymentData = await api.post("/payment/process_payment", {
-        orderId: ordernow.data.orderId,
+    setIsSubmitting(true);
+    try {
+      const orderDetails = cart.map((item) => ({
+        productId: item._id || item.id,
+        quantity: item.quantity,
+        size: item.size,
+      }));
+      const orderResponse = await api.post("/orders", {
+        orderDetails,
+        paymentMethod,
       });
-      setPayment(paymentData.data);
-      setOrderId(ordernow.data.orderId);
-      setPayment(paymentData.data);
-      socket.emit("join-order", ordernow.data.orderId);
+      if (paymentMethod === "online") {
+        const paymentResponse = await api.post("/payment/process_payment", {
+          orderId: orderResponse.data.orderId,
+        });
+        setOrderId(orderResponse.data.orderId);
+        setPayment(paymentResponse.data);
+        socket.emit("join-order", orderResponse.data.orderId);
+        setIsSuccess(true);
+        setMessage("Order created. Scan the code to complete payment.");
+      } else {
+        setIsSuccess(true);
+        setMessage("Your order has been placed.");
+      }
+    } catch (error) {
+      setIsSuccess(false);
+      setMessage(error.response?.data?.message || "Unable to place your order. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   }
   useEffect(() => {
@@ -215,23 +225,22 @@ function CheckoutForm({ cart }) {
       )}
       <button
         type="submit"
+        disabled={isSubmitting || cartIsEmpty}
         className="mt-6 w-full rounded-full bg-black py-4 text-sm font-semibold text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
       >
-        {paymentMethod === "online" ? "Proceed to payment" : "Place order"}
+        {isSubmitting ? "Placing order…" : paymentMethod === "online" ? "Proceed to payment" : "Place order"}
       </button>
-      <p className="mt-3 text-center text-[11px] leading-5 text-zinc-500">
-        Checkout is a preview and does not place orders or collect payments yet.
-      </p>
       {payment && (
-        <div className="absolute inset-0 z-[999] flex items-center justify-center bg-black/50">
-          <div className="mt-4 rounded-lg bg-zinc-100 p-4 text-sm text-zinc-700">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 p-5">
+          <div className="w-full max-w-sm rounded-lg bg-white p-6 text-sm text-zinc-700 shadow-xl">
             <p>Payment QR Code:</p>
             <img
               src={payment.qrCode}
               alt="Payment QR Code"
-              className="mt-2 w-32 h-32"
+              className="mx-auto mt-3 h-48 w-48"
             />
-            <p className="mt-2">Amount: ₱{payment.amount.toLocaleString()}</p>
+            <p className="mt-2 text-center">Amount: ₱{payment.amount.toLocaleString()}</p>
+            <button type="button" onClick={() => setPayment(null)} className="mt-4 w-full rounded-full border border-zinc-300 py-2 font-medium">Close</button>
           </div>
         </div>
       )}

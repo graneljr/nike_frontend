@@ -89,11 +89,15 @@ function ProductDetails({ addToCart }) {
       return;
     }
 
-    addToCart(
+    const added = addToCart(
       { ...product, price: selectedVariant.price },
       selectedVariant.label,
       quantity,
     );
+    if (!added) {
+      setMessage("Your cart already has the maximum available quantity for this size.");
+      return;
+    }
     setMessage("Added to cart.");
   }
 

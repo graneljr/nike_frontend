@@ -18,6 +18,8 @@ import PayOrder from "./pages/PayOrder";
 function App() {
   const [cart, setCart] = useState([]);
   const [userData, setUserData] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [cartOwnerId, setCartOwnerId] = useState(null);
   useEffect(() => {
     applyDisplaySettings(getDisplaySettings());
     const getCurrentUser = async () => {
@@ -26,37 +28,98 @@ function App() {
 
         setUserData(response.data.userData);
       } catch (error) {
-        console.log("Not logged in");
         setUserData(null);
+      } finally {
+        setAuthChecked(true);
       }
     };
 
     getCurrentUser();
   }, []);
 
+  useEffect(() => {
+    if (!authChecked) return;
+    if (!userData?._id) {
+      setCartOwnerId(null);
+      return;
+    }
+
+    let active = true;
+    const loadCart = async () => {
+      try {
+        const response = await api.get("/cart");
+        if (active) setCart(response.data.items || []);
+      } catch (error) {
+        // Keep the in-memory cart available if the cart service cannot be reached.
+      } finally {
+        if (active) setCartOwnerId(userData._id);
+      }
+    };
+
+    setCartOwnerId(null);
+    loadCart();
+    return () => {
+      active = false;
+    };
+  }, [authChecked, userData]);
+
+  useEffect(() => {
+    if (!userData?._id || cartOwnerId !== userData._id) return;
+
+    api.put("/cart", {
+      items: cart.map((item) => ({
+        productId: item._id || item.id,
+        size: item.size,
+        quantity: item.quantity,
+        selected: item.selected !== false,
+      })),
+    }).catch(() => {
+      // Cart changes remain usable in memory if the API is temporarily unavailable.
+    });
+  }, [cart, cartOwnerId, userData]);
+
+  function getAvailableQuantity(product, size) {
+    const variants = product.sizes || product.size || [];
+    const variant = variants.find((entry) =>
+      String(entry.label ?? entry.size) === String(size),
+    );
+    return variant?.quantity == null ? null : Number(variant.quantity);
+  }
+
   function addToCart(product, size, quantity) {
+    const available = getAvailableQuantity(product, size);
     const existingItem = cart.find(
       (item) => item.id === product.id && item.size === size,
     );
+    const nextQuantity = (existingItem?.quantity || 0) + quantity;
+
+    if (available !== null && nextQuantity > available) return false;
 
     if (existingItem) {
       setCart(
         cart.map((item) =>
           item.id === product.id && item.size === size
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: item.quantity + quantity, selected: true }
             : item,
         ),
       );
     } else {
-      setCart([...cart, { ...product, size, quantity }]);
+      setCart([...cart, { ...product, size, quantity, selected: true }]);
     }
+    return true;
   }
 
   function updateQuantity(id, size, change) {
     setCart(
       cart.map((item) =>
         item.id === id && item.size === size
-          ? { ...item, quantity: Math.max(1, item.quantity + change) }
+          ? {
+              ...item,
+              quantity: Math.min(
+                getAvailableQuantity(item, size) ?? Number.POSITIVE_INFINITY,
+                Math.max(1, item.quantity + change),
+              ),
+            }
           : item,
       ),
     );
@@ -64,6 +127,16 @@ function App() {
 
   function removeFromCart(id, size) {
     setCart(cart.filter((item) => !(item.id === id && item.size === size)));
+  }
+
+  function setItemSelected(id, size, selected) {
+    setCart((items) => items.map((item) =>
+      item.id === id && item.size === size ? { ...item, selected } : item,
+    ));
+  }
+
+  function setAllItemsSelected(selected) {
+    setCart((items) => items.map((item) => ({ ...item, selected })));
   }
 
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
@@ -98,6 +171,8 @@ function App() {
               cart={cart}
               updateQuantity={updateQuantity}
               removeFromCart={removeFromCart}
+              setItemSelected={setItemSelected}
+              setAllItemsSelected={setAllItemsSelected}
             />
           }
         />

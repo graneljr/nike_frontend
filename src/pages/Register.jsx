@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import api from "@/middleware/apiMiddleware";
 
 function Register() {
   const [createUser, setCreateUser] = useState({
@@ -21,8 +22,7 @@ function Register() {
     e.preventDefault();
 
     try {
-      const response = await axios.post(
-        "http://localhost:3001/api/auth/register",
+      const response = await api.post("/api/auth/register",
         createUser
       );
   

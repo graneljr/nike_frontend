@@ -47,7 +47,7 @@ function Login({ setUserData }) {
   };
 
   return (
-    <section className="flex h-screen items-center justify-center bg-zinc-50 px-5 py-8 sm:px-8 sm:py-12">
+    <section className="flex min-h-screen min-h-[100svh] items-center justify-center bg-zinc-50 px-4 py-6 sm:px-8 sm:py-10">
       <div className="mx-auto grid w-full max-w-6xl overflow-hidden rounded-2xl bg-white shadow-[0_24px_80px_-32px_rgba(0,0,0,0.25)] lg:min-h-[620px] lg:grid-cols-[0.92fr_1.08fr]">
         <div className="order-2 flex items-center justify-center px-6 py-8 sm:px-12 sm:py-10 lg:order-1 lg:px-14 lg:py-12">
           <div className="w-full max-w-md">

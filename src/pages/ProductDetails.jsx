@@ -121,9 +121,9 @@ function ProductDetails({ addToCart }) {
   const displayPrice = selectedVariant?.price ?? product.price;
 
   return (
-    <section className="mx-auto max-w-7xl px-5 py-12 sm:px-8 sm:py-20">
+    <section className="mx-auto max-w-7xl px-4 py-8 sm:px-8 sm:py-14 lg:py-20">
       <Link to="/shop" className="mb-8 inline-block text-sm text-zinc-500 transition hover:text-black">← Back to shop</Link>
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-16">
+      <div className="grid grid-cols-1 gap-7 sm:gap-10 lg:grid-cols-2 lg:gap-16">
         <div className="relative aspect-square overflow-hidden bg-zinc-100">
           <img src={product.image} alt={product.name} className="h-full w-full object-contain p-8" />
         </div>

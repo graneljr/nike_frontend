@@ -173,7 +173,7 @@ function StockDetailsModal({ item, onClose, onUpdateSize, onAddSize }) {
           <p className="mb-3 text-xs font-semibold text-zinc-600">
             Add a size option
           </p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             <input
               aria-label="New size"
               value={newSize}
@@ -352,7 +352,7 @@ function AddStockModal({ onClose }) {
               {sizes.map((entry, index) => (
                 <div
                   key={index}
-                  className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2"
+                  className="grid grid-cols-2 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
                 >
                   <input
                     aria-label={`Size ${index + 1}`}

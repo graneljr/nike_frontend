@@ -53,11 +53,11 @@ function Shop() {
   });
 
   return (
-    <section className="mx-auto min-h-[70vh] max-w-7xl px-5 py-14 sm:px-8 sm:py-20">
+    <section className="mx-auto min-h-[70vh] max-w-7xl px-4 py-10 sm:px-8 sm:py-14 lg:py-20">
       <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">
         Find your pair
       </p>
-      <h1 className="mt-2 text-4xl font-black tracking-tight sm:text-6xl">
+      <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-5xl lg:text-6xl">
         Shop Nike
       </h1>
       <div className="my-10 flex flex-col gap-5 border-y border-zinc-200 py-6 lg:flex-row lg:items-center lg:justify-between">

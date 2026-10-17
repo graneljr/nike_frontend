@@ -81,7 +81,7 @@ function SettingsPage() {
             </div>
           </section>
 
-          <section className="flex items-center justify-between gap-5 rounded-2xl border border-zinc-200 bg-white p-5 sm:p-7">
+          <section className="flex flex-col items-start justify-between gap-5 rounded-2xl border border-zinc-200 bg-white p-5 sm:flex-row sm:items-center sm:p-7">
             <div>
               <h2 className="text-lg font-bold">Reduce motion</h2>
               <p className="mt-1 max-w-lg text-sm leading-6 text-zinc-500">Limit animations and transitions across the store.</p>

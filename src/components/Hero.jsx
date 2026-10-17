@@ -3,10 +3,10 @@ import { Link } from "react-router-dom";
 function Hero() {
   return (
     <section className="bg-zinc-100">
-      <div className="mx-auto grid min-h-[70vh] max-w-7xl grid-cols-1 items-center gap-10 px-5 py-14 sm:px-8 lg:grid-cols-2 lg:py-20">
+      <div className="mx-auto grid min-h-[60svh] max-w-7xl grid-cols-1 items-center gap-8 px-4 py-10 sm:min-h-[70vh] sm:gap-10 sm:px-8 sm:py-14 lg:grid-cols-2 lg:py-20">
         <div className="order-2 lg:order-1">
           <p className="mb-4 text-sm font-bold uppercase tracking-widest text-zinc-500">New season essentials</p>
-          <h1 className="max-w-xl text-5xl font-black uppercase leading-none tracking-tighter sm:text-6xl lg:text-7xl">
+          <h1 className="max-w-xl text-4xl font-black uppercase leading-[0.95] tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
             Move with purpose.
           </h1>
           <p className="mt-6 max-w-md text-lg leading-relaxed text-zinc-600">

@@ -28,7 +28,7 @@ function Home() {
   return (
     <>
       <Hero />
-      <section className="mx-auto max-w-7xl px-5 py-20 sm:px-8">
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-8 sm:py-16 lg:py-20">
         <div className="mb-8 flex items-end justify-between">
           <div>
             <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">
@@ -48,7 +48,7 @@ function Home() {
         <ProductGrid products={products.slice(0, 4)} />
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 pb-20 sm:px-8">
+      <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-8 sm:pb-16 lg:pb-20">
         <h2 className="mb-8 text-3xl font-bold tracking-tight sm:text-4xl">
           Shop by category
         </h2>
@@ -73,7 +73,7 @@ function Home() {
       </section>
 
       <section className="bg-black text-white">
-        <div className="mx-auto max-w-7xl px-5 py-20 text-center sm:px-8 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 py-14 text-center sm:px-8 sm:py-20 lg:py-24">
           <p className="text-sm font-bold uppercase tracking-widest text-zinc-400">
             Made to move
           </p>

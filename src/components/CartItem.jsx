@@ -19,9 +19,9 @@ function CartItem({ item, updateQuantity, removeFromCart, setItemSelected }) {
       </div>
       <div className="flex min-w-0 flex-1 flex-col justify-between">
         <div>
-          <div className="flex items-start justify-between gap-4">
-            <h3 className="font-semibold">{item.name}</h3>
-            <p className="shrink-0 font-medium">₱{(item.price * item.quantity).toLocaleString()}</p>
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+            <h3 className="min-w-0 break-words text-sm font-semibold sm:text-base">{item.name}</h3>
+            <p className="shrink-0 text-sm font-medium sm:text-base">₱{(item.price * item.quantity).toLocaleString()}</p>
           </div>
           <p className="mt-1 text-sm text-zinc-500">Size {item.size}</p>
         </div>

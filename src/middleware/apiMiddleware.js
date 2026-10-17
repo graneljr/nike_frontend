@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:3001/api",
+  baseURL: "https://nike-backend-cz93.vercel.app/api",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",

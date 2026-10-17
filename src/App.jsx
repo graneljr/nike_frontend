@@ -195,6 +195,10 @@ function App() {
           path="/dashboard"
           element={<Dashboard userData={userData} />}
         />
+        <Route
+          path="/admin/dashboard"
+          element={<Dashboard userData={userData} />}
+        />
          <Route
           path="/profile"
           element={<Dashboard userData={userData} setUserData={setUserData} />}

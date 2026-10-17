@@ -44,7 +44,7 @@ function UserDashboard({ userData }) {
     const loadProducts = async () => {
       try {
         const response = await api.get("/products");
-        setProducts(response.data);
+        setProducts(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         toast.error(error.response?.data?.message || "Unable to load products.");
       }

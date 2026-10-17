@@ -19,7 +19,7 @@ function Dashboard({ userData, setUserData }) {
     const getLatestOrder = async () => {
       try {
         const latestOrder = await api.get("/orders/latest_orders");
-        setLatestOrders(latestOrder.data);
+        setLatestOrders(Array.isArray(latestOrder.data) ? latestOrder.data : []);
       } catch (error) {
         toast.error(error.data.message);
       }
@@ -59,7 +59,7 @@ function Dashboard({ userData, setUserData }) {
   else if (isAdmin)
     page = (
       <AdminDashboard
-        orderRows={latestOrders?.slice(0,4)}
+        orderRows={Array.isArray(latestOrders) ? latestOrders.slice(0, 4) : []}
         onStatusUpdate={updateOrderStatus}
       />
     );

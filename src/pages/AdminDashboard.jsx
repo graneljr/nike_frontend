@@ -27,7 +27,7 @@ function AdminDashboard({orderRows,onStatusUpdate}) {
     trends: {},
   });
 
-  const [products, setProducts] = useState(null)
+  const [products, setProducts] = useState([])
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
@@ -48,7 +48,7 @@ function AdminDashboard({orderRows,onStatusUpdate}) {
     const getProducts = async () => {
       try {
         const products = await api.get("/products/")
-        setProducts(products.data)
+        setProducts(Array.isArray(products.data) ? products.data : [])
       } catch (error) {
         toast.error(error.data.message)
       }

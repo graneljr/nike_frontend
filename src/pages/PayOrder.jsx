@@ -9,35 +9,51 @@ const PayOrder = () => {
   const [orderData, setOrderData] = useState(null);
 
   useEffect(() => {
+    let active = true;
+    let loadedOnce = false;
+    let redirected = false;
+
+    const completePayment = () => {
+      if (redirected) return;
+      redirected = true;
+      toast.success("Payment Successful!");
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 3000);
+    };
+
     const getOrderById = async () => {
       try {
         const order = await api.get(`/orders/${orderId}`);
+        if (!active) return;
         setOrderData(order.data);
+        loadedOnce = true;
+        if (order.data.paymentStatus === "paid") completePayment();
       } catch (error) {
-        toast.error(error.data.message);
+        if (active && !loadedOnce) {
+          toast.error(error.response?.data?.message || "Unable to load this order.");
+        }
       }
     };
 
     getOrderById();
-
-    socket.emit("join-order", orderId);
+    const pollId = window.setInterval(getOrderById, 3000);
 
     const handlePaymentSuccess = (data) => {
       if (data.orderId === orderId) {
-        toast.success("Payment Successful!");
-
-        setTimeout(() => {
-          window.location.href = "/";
-        }, 3000);
+        completePayment();
       }
     };
 
     socket.on("payment-success", handlePaymentSuccess);
+    socket.emit("join-order", orderId);
 
     return () => {
+      active = false;
+      window.clearInterval(pollId);
       socket.off("payment-success", handlePaymentSuccess);
     };
-  }, []);
+  }, [orderId]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();

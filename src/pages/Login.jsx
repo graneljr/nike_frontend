@@ -33,11 +33,11 @@ function Login({ setUserData }) {
           action: {
             label: "Go to dashboard",
             onClick: () => {
-              roleCheck(response.data.role);
+              roleCheck(response.data.userData?.role);
             },
           },
         });
-      setUserData(response.data.setUserData);
+      setUserData(response.data.userData);
     } catch (error) {
       toast.error(
         error?.response?.data?.message ||

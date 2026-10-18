@@ -17,6 +17,12 @@ import { toast } from "sonner";
 import { percentageChange } from "@/utils/percentageChange";
 
 const money = (amount) => `₱${Number(amount).toLocaleString()}`;
+const getPairCount = (item) =>
+  (Array.isArray(item?.size) ? item.size : []).reduce(
+    (total, entry) => total + (Number(entry.quantity) || 0),
+    0,
+  );
+
 function StockDetailsModal({ item, onClose, onUpdateSize, onAddSize }) {
   const [sizeValues, setSizeValues] = useState({});
   const [newSize, setNewSize] = useState("");
@@ -231,6 +237,7 @@ function AddStockModal({ onClose }) {
   const [imagePreview, setImagePreview] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sizes, setSizes] = useState([{ size: "", price: "", quantity: "" }]);
+  const closeModal = () => onClose();
 
   useEffect(
     () => () => {
@@ -291,8 +298,8 @@ function AddStockModal({ onClose }) {
     {
       name: "category",
       label: "Category",
-      placeholder: "Running",
       required: true,
+      options: ["Running", "Basketball", "Lifestyle", "Training"],
     },
   ];
 
@@ -308,7 +315,7 @@ function AddStockModal({ onClose }) {
     <Modal
       eyebrow="Inventory management"
       title="Add new stock"
-      onClose={onClose}
+      onClose={closeModal}
     >
       <form onSubmit={handleSubmit}>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -320,14 +327,32 @@ function AddStockModal({ onClose }) {
               <span className="mb-2 block text-xs font-semibold text-zinc-600">
                 {field.label}
               </span>
-              <input
-                name={field.name}
-                type={field.type || "text"}
-                min={field.type === "number" ? "0" : undefined}
-                required={field.required}
-                placeholder={field.placeholder}
-                className="w-full rounded-lg border border-zinc-200 px-4 py-3 text-sm outline-none transition placeholder:text-zinc-400 focus:border-black"
-              />
+              {field.options ? (
+                <select
+                  name={field.name}
+                  required={field.required}
+                  defaultValue=""
+                  className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-black"
+                >
+                  <option value="" disabled>
+                    Select a category
+                  </option>
+                  {field.options.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  name={field.name}
+                  type={field.type || "text"}
+                  min={field.type === "number" ? "0" : undefined}
+                  required={field.required}
+                  placeholder={field.placeholder}
+                  className="w-full rounded-lg border border-zinc-200 px-4 py-3 text-sm outline-none transition placeholder:text-zinc-400 focus:border-black"
+                />
+              )}
             </label>
           ))}
           <section className="sm:col-span-2">
@@ -442,7 +467,7 @@ function AddStockModal({ onClose }) {
         <div className="mt-6 flex gap-3">
           <button
             type="button"
-            onClick={onClose}
+            onClick={closeModal}
             className="flex-1 rounded-full border border-zinc-200 px-4 py-3 text-sm font-bold hover:bg-zinc-50"
           >
             Cancel
@@ -479,12 +504,11 @@ function StocksPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
   const totalPairs = stockItems.reduce(
-    (total, item) =>
-      total + item.size.reduce((sum, entry) => sum + entry.quantity, 0),
+    (total, item) => total + getPairCount(item),
     0,
   );
   const lowStockCount = stockItems.filter(
-    (item) => item.size.reduce((sum, entry) => sum + entry.quantity, 0) <= 12,
+    (item) => getPairCount(item) <= 12,
   ).length;
   const monthStart = new Date();
   monthStart.setDate(1);
@@ -612,24 +636,14 @@ function StocksPage() {
                   <td className="px-5 py-4">
                     <span
                       className={
-                        item.size.reduce(
-                          (total, entry) => total + entry.quantity,
-                          0,
-                        ) <= 12
+                        getPairCount(item) <= 12
                           ? "font-bold text-zinc-900"
                           : "text-zinc-600"
                       }
                     >
-                      {item.size.reduce(
-                        (total, entry) => total + entry.quantity,
-                        0,
-                      )}{" "}
-                      pairs
+                      {getPairCount(item)} pairs
                     </span>
-                    {item.size.reduce(
-                      (total, entry) => total + entry.quantity,
-                      0,
-                    ) <= 12 && (
+                    {getPairCount(item) <= 12 && (
                       <span className="ml-2 rounded-full bg-zinc-100 px-2 py-1 text-[10px] font-semibold text-zinc-600">
                         Low
                       </span>
@@ -657,7 +671,7 @@ function StocksPage() {
             key="add-stock"
             onClose={(product) => {
               setIsAddModalOpen(false);
-              if (product) {
+              if (product && typeof product === "object" && product._id) {
                 setStockItems((current) => [...current, product]);
               }
             }}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faRotateLeft, faTextHeight } from "@fortawesome/free-solid-svg-icons";
 import { PageHeading } from "../components/dashboard/DashboardUI";
+import { toast } from "sonner";
 import {
   defaultDisplaySettings,
   getDisplaySettings,
@@ -26,6 +27,7 @@ function SettingsPage() {
   const resetSettings = () => {
     setSettings(defaultDisplaySettings);
     saveDisplaySettings(defaultDisplaySettings);
+    toast.success("Settings reset to defaults.");
   };
 
   return (

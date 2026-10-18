@@ -15,6 +15,7 @@ import {
 } from "../components/dashboard/DashboardUI";
 import api from "@/middleware/apiMiddleware";
 import { toast } from "sonner";
+import { formatDate } from "@/utils/DateFormatter";
 
 const money = (amount) => `₱${Number(amount).toLocaleString()}`;
 
@@ -57,9 +58,7 @@ function UserDashboard({ userData }) {
   const recentOrders = dashboardData.orders.map((order) => ({
     ...order,
     status: order.status?.charAt(0).toUpperCase() + order.status?.slice(1),
-    createdAt: order.createdAt
-      ? new Date(order.createdAt).toLocaleDateString()
-      : "—",
+    createdAt: formatDate(order.createdAt),
   }));
   const memberSince = userData?.createdAt
     ? new Date(userData.createdAt).getFullYear()

@@ -15,6 +15,7 @@ import { applyDisplaySettings, getDisplaySettings } from "./lib/displaySettings"
 import DashboardLayout from "./layout/DashboardLayOut";
 import PublicLayout from "./layout/PublicLayOut";
 import PayOrder from "./pages/PayOrder";
+import { toast } from "sonner";
 function App() {
   const [cart, setCart] = useState([]);
   const [userData, setUserData] = useState(null);
@@ -87,6 +88,8 @@ function App() {
   }
 
   function addToCart(product, size, quantity) {
+    if (!userData?._id) return "login-required";
+
     const available = getAvailableQuantity(product, size);
     const existingItem = cart.find(
       (item) => item.id === product.id && item.size === size,
@@ -126,7 +129,9 @@ function App() {
   }
 
   function removeFromCart(id, size) {
+    const itemToRemove = cart.find((item) => item.id === id && item.size === size);
     setCart(cart.filter((item) => !(item.id === id && item.size === size)));
+    if (itemToRemove) toast.success(`${itemToRemove.name} removed from cart.`);
   }
 
   function setItemSelected(id, size, selected) {
@@ -160,6 +165,7 @@ function App() {
           element={
             <ProductDetails
               addToCart={addToCart}
+              isAuthenticated={Boolean(userData?._id)}
             />
           }
         />

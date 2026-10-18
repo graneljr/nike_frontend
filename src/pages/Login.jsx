@@ -1,9 +1,18 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import api from "../middleware/apiMiddleware";
 import {toast} from "sonner";
 function Login({ setUserData }) {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const requestedReturnTo = searchParams.get("returnTo");
+  const returnTo = requestedReturnTo?.startsWith("/") && !requestedReturnTo.startsWith("//")
+    ? requestedReturnTo
+    : null;
+  const registerPath = returnTo
+    ? `/register?returnTo=${encodeURIComponent(returnTo)}`
+    : "/register";
   const [credentials, setCredentials] = useState({ email: "", password: "" });
 
   const handleChange = (e) => {
@@ -28,6 +37,13 @@ function Login({ setUserData }) {
     try {
       const response = await api.post("/auth/login",credentials);
 
+      setUserData(response.data.userData);
+      if (returnTo) {
+        toast.success("Login successful.");
+        navigate(returnTo, { replace: true });
+        return;
+      }
+
       toast("✅ Login Status", {
           description: response.data.message,
           action: {
@@ -37,7 +53,6 @@ function Login({ setUserData }) {
             },
           },
         });
-      setUserData(response.data.userData);
     } catch (error) {
       toast.error(
         error?.response?.data?.message ||
@@ -117,7 +132,7 @@ function Login({ setUserData }) {
                   <p>or</p> <span className="w-1/2 h-0.5 bg-gray-300" />
                 </div>
                 <Link
-                  to="/register"
+                  to={registerPath}
                   className=" w-full text-center border border-slate-200 py-2 rounded-md"
                 >
                   Create account

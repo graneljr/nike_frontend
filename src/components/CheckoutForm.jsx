@@ -28,8 +28,6 @@ function CheckoutForm({ cart }) {
   const [payment, setPayment] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [paymentMethod, setPaymentMethod] = useState("cod");
-  const [message, setMessage] = useState("");
-  const [isSuccess, setIsSuccess] = useState(false);
   const [orderId, setOrderId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -38,20 +36,17 @@ function CheckoutForm({ cart }) {
       ...current,
       [event.target.name]: event.target.value,
     }));
-    setMessage("");
   }
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (cartIsEmpty) {
-      setIsSuccess(false);
-      setMessage("Select at least one item to continue.");
+      toast.error("Select at least one item to continue.");
       return;
     }
     if (!form.address.trim()) {
-      setIsSuccess(false);
-      setMessage("Enter a delivery address to continue.");
+      toast.error("Enter a delivery address to continue.");
       return;
     }
 
@@ -73,15 +68,12 @@ function CheckoutForm({ cart }) {
         setOrderId(orderResponse.data.orderId);
         setPayment(paymentResponse.data);
         socket.emit("join-order", orderResponse.data.orderId);
-        setIsSuccess(true);
-        setMessage("Order created. Scan the code to complete payment.");
+        toast.info("Order created. Scan the code to complete payment.");
       } else {
-        setIsSuccess(true);
-        setMessage("Your order has been placed.");
+        toast.success("Your order has been placed.");
       }
     } catch (error) {
-      setIsSuccess(false);
-      setMessage(error.response?.data?.message || "Unable to place your order. Please try again.");
+      toast.error(error.response?.data?.message || "Unable to place your order. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -92,9 +84,7 @@ function CheckoutForm({ cart }) {
 
       if (data.orderId === orderId) {
         console.log("Correct order payment received!");
-        toast.success("Payment Sucessful");
-        setMessage("Payment successful!");
-        setIsSuccess(true);
+        toast.success("Payment successful!");
 
         setTimeout(() => {
           window.location.href = "/";
@@ -191,7 +181,6 @@ function CheckoutForm({ cart }) {
                   checked={isSelected}
                   onChange={() => {
                     setPaymentMethod(method.id);
-                    setMessage("");
                   }}
                   className="absolute right-3 top-3 h-4 w-4 accent-black"
                 />
@@ -215,14 +204,6 @@ function CheckoutForm({ cart }) {
         </div>
       </fieldset>
 
-      {message && (
-        <p
-          className={`mt-4 rounded-lg px-3.5 py-3 text-sm ${isSuccess ? "bg-zinc-100 text-zinc-700" : "bg-red-50 text-red-700"}`}
-          role="status"
-        >
-          {message}
-        </p>
-      )}
       <button
         type="submit"
         disabled={isSubmitting || cartIsEmpty}

@@ -15,7 +15,7 @@ import {
 } from "../components/dashboard/DashboardUI";
 import api from "@/middleware/apiMiddleware";
 import { toast } from "sonner";
-import { formatter } from "@/utils/DateFormatter";
+import { formatDate } from "@/utils/DateFormatter";
 
 function MemberDetailsModal({ member, onClose }) {
   if (!member) return null;
@@ -30,7 +30,7 @@ function MemberDetailsModal({ member, onClose }) {
         <div className="flex items-center justify-between py-4">
           <dt className="text-xs text-zinc-500">Member Since</dt>
           <dd className="mt-1 text-sm font-semibold">
-            {formatter.format(new Date(member?.createdAt)).replace(",", "")}
+            {formatDate(member?.createdAt)}
           </dd>
         </div>
         <div className="flex items-center justify-between py-4">
@@ -133,9 +133,7 @@ function UsersPage() {
                     </p>
                   </td>
                   <td className="px-5 py-4 text-zinc-500">
-                    {formatter
-                      .format(new Date(member?.createdAt))
-                      .replace(",", "")}
+                    {formatDate(member?.createdAt)}
                   </td>
                   <td className="px-5 py-4 text-right">
                     <button

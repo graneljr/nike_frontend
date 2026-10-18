@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { OrdersTable, PageHeading } from "../components/dashboard/DashboardUI";
 import api from "@/middleware/apiMiddleware";
 import { toast } from "sonner";
+import { formatDate } from "@/utils/DateFormatter";
 
 const filters = [
   "All orders",
@@ -18,9 +19,7 @@ function formatOrder(order) {
   return {
     ...order,
     status: order.status?.charAt(0).toUpperCase() + order.status?.slice(1),
-    createdAt: order.createdAt
-      ? new Date(order.createdAt).toLocaleDateString()
-      : "—",
+    createdAt: formatDate(order.createdAt),
   };
 }
 

@@ -5,6 +5,7 @@ import CategoryFilter from "../components/CategoryFilter";
 import ProductGrid from "../components/ProductGrid";
 import api from "@/middleware/apiMiddleware";
 import { toast } from "sonner";
+import { productHasCategory } from "@/utils/productCategories";
 
 function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -45,9 +46,7 @@ function Shop() {
     const matchesSearch = product?.name
       ?.toLowerCase()
       .includes(searchQuery.toLowerCase()) ?? false;
-    const matchesCategory =
-      selectedCategory === "All" ||
-      product?.category?.toLowerCase() === selectedCategory.toLowerCase();
+    const matchesCategory = productHasCategory(product?.category, selectedCategory);
 
     return matchesSearch && matchesCategory;
   });

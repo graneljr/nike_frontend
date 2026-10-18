@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { formatCategories } from "@/utils/productCategories";
 
 function ProductCard({ product }) {
   return (
@@ -18,7 +19,7 @@ function ProductCard({ product }) {
         </div>
         <div className="pt-4">
           <h3 className="font-semibold text-black transition-colors duration-300 group-hover:text-zinc-600">{product.name}</h3>
-          <p className="mt-1 text-sm text-zinc-500">{product.category}</p>
+          <p className="mt-1 text-sm text-zinc-500">{formatCategories(product.category)}</p>
           <p className="mt-2 font-medium text-black">₱{product.price.toLocaleString()}</p>
         </div>
       </Link>

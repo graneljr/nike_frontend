@@ -1,9 +1,16 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import api from "@/middleware/apiMiddleware";
+import { toast } from "sonner";
 
 function Register() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get("returnTo");
+  const loginPath = returnTo
+    ? `/login?returnTo=${encodeURIComponent(returnTo)}`
+    : "/login";
   const [createUser, setCreateUser] = useState({
     fullName: "",
     email: "",
@@ -25,10 +32,11 @@ function Register() {
       const response = await api.post("/auth/register",
         createUser
       );
-  
-      alert(response.data.message || "Registration successful!");
+
+      toast.success("Account created. Please log in to continue.");
+      navigate(loginPath, { replace: true });
     } catch (error) {
-      alert(error.response?.data?.message || "Registration failed. Please try again.");
+      toast.error(error.response?.data?.message || "Registration failed. Please try again.");
     }
   };
 
@@ -125,7 +133,7 @@ function Register() {
                   <span className="h-0.5 w-1/2 bg-gray-300" />
                 </div>
                 <Link
-                  to="/login"
+                  to={loginPath}
                   className="w-full rounded-md border border-slate-200 py-2 text-center"
                 >
                   Login

@@ -1,4 +1,6 @@
-const categories = ["All", "Running", "Basketball", "Lifestyle", "Training"];
+import { PRODUCT_CATEGORIES } from "@/utils/productCategories";
+
+const categories = ["All", ...PRODUCT_CATEGORIES.map(({ label }) => label)];
 
 function CategoryFilter({ selectedCategory, setSelectedCategory }) {
   return (

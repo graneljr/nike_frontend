@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import api from "@/middleware/apiMiddleware";
 import products from "../data/products";
+import { formatCategories } from "@/utils/productCategories";
+import { toast } from "sonner";
 
 function normalizeProduct(product) {
   const variants = Array.isArray(product.size) && product.size.length > 0
@@ -24,13 +26,13 @@ function normalizeProduct(product) {
   };
 }
 
-function ProductDetails({ addToCart }) {
+function ProductDetails({ addToCart, isAuthenticated }) {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState("");
   const [quantity, setQuantity] = useState(1);
-  const [message, setMessage] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -40,7 +42,6 @@ function ProductDetails({ addToCart }) {
     setProduct(null);
     setSelectedSize("");
     setQuantity(1);
-    setMessage("");
 
     if (localProduct) {
       setProduct(normalizeProduct(localProduct));
@@ -76,16 +77,21 @@ function ProductDetails({ addToCart }) {
   const maxQuantity = selectedVariant?.quantity;
 
   function handleAddToCart() {
+    if (!isAuthenticated) {
+      toast.info("Log in or create an account to add items to your cart.");
+      navigate(`/login?returnTo=${encodeURIComponent(`/product/${id}`)}`);
+      return;
+    }
     if (!selectedVariant) {
-      setMessage("Please select a size.");
+      toast.error("Please select a size.");
       return;
     }
     if (maxQuantity !== null && maxQuantity !== undefined && maxQuantity < 1) {
-      setMessage("This size is out of stock.");
+      toast.error("This size is out of stock.");
       return;
     }
     if (maxQuantity !== null && maxQuantity !== undefined && quantity > maxQuantity) {
-      setMessage(`Only ${maxQuantity} pair${maxQuantity === 1 ? "" : "s"} available in this size.`);
+      toast.error(`Only ${maxQuantity} pair${maxQuantity === 1 ? "" : "s"} available in this size.`);
       return;
     }
 
@@ -94,11 +100,16 @@ function ProductDetails({ addToCart }) {
       selectedVariant.label,
       quantity,
     );
-    if (!added) {
-      setMessage("Your cart already has the maximum available quantity for this size.");
+    if (added === "login-required") {
+      toast.info("Log in or create an account to add items to your cart.");
+      navigate(`/login?returnTo=${encodeURIComponent(`/product/${id}`)}`);
       return;
     }
-    setMessage("Added to cart.");
+    if (!added) {
+      toast.error("Your cart already has the maximum available quantity for this size.");
+      return;
+    }
+    toast.success("Added to cart.");
   }
 
   if (isLoading) {
@@ -128,7 +139,7 @@ function ProductDetails({ addToCart }) {
           <img src={product.image} alt={product.name} className="h-full w-full object-contain p-8" />
         </div>
         <div className="flex flex-col justify-center">
-          <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">{product.category}</p>
+          <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">{formatCategories(product.category)}</p>
           <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">{product.name}</h1>
           <p className="mt-4 text-xl font-medium">₱{displayPrice.toLocaleString()}</p>
           <p className="mt-7 max-w-lg leading-relaxed text-zinc-600">{product.description}</p>
@@ -147,7 +158,6 @@ function ProductDetails({ addToCart }) {
                       onClick={() => {
                         setSelectedSize(variant.label);
                         setQuantity((current) => Math.min(current, variant.quantity || current));
-                        setMessage("");
                       }}
                       className={`h-12 min-w-12 border px-3 transition disabled:cursor-not-allowed disabled:opacity-40 ${
                         selectedSize === variant.label
@@ -189,18 +199,13 @@ function ProductDetails({ addToCart }) {
             )}
           </div>
 
-          {message && (
-            <p className={`mt-5 text-sm ${message === "Added to cart." ? "text-green-700" : "text-red-700"}`} role="status">
-              {message}
-            </p>
-          )}
           <button
             type="button"
             onClick={handleAddToCart}
             disabled={product.sizes.length === 0}
             className="mt-6 w-full rounded-full bg-black py-4 font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Add to Cart
+            {isAuthenticated ? "Add to Cart" : "Log in to Add to Cart"}
           </button>
         </div>
       </div>

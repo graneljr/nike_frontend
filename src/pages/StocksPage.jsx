@@ -15,6 +15,7 @@ import {
 import api from "@/middleware/apiMiddleware";
 import { toast } from "sonner";
 import { percentageChange } from "@/utils/percentageChange";
+import { PRODUCT_CATEGORIES, formatCategories } from "@/utils/productCategories";
 
 const money = (amount) => `₱${Number(amount).toLocaleString()}`;
 const getPairCount = (item) =>
@@ -43,7 +44,7 @@ function StockDetailsModal({ item, onClose, onUpdateSize, onAddSize }) {
 
   const sizes = Array.isArray(item.size) ? item.size : [];
   const details = [
-    ["Category", item.category],
+    ["Category", formatCategories(item.category)],
     ["Price", money(item.price)],
     [
       "Available pairs",
@@ -237,6 +238,7 @@ function AddStockModal({ onClose }) {
   const [imagePreview, setImagePreview] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sizes, setSizes] = useState([{ size: "", price: "", quantity: "" }]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const closeModal = () => onClose();
 
   useEffect(
@@ -254,6 +256,10 @@ function AddStockModal({ onClose }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (selectedCategories.length === 0 || selectedCategories.length > 2) {
+      toast.error("Choose one or two categories for this shoe.");
+      return;
+    }
     if (!selectedImage) {
       toast.error("Choose a product image before adding stock.");
       return;
@@ -263,6 +269,7 @@ function AddStockModal({ onClose }) {
     try {
       const formData = new FormData(event.currentTarget);
       formData.set("image", selectedImage);
+      formData.set("category", JSON.stringify(selectedCategories));
       formData.set(
         "sizes",
         JSON.stringify(
@@ -295,13 +302,16 @@ function AddStockModal({ onClose }) {
       placeholder: "Nike Air Max",
       required: true,
     },
-    {
-      name: "category",
-      label: "Category",
-      required: true,
-      options: ["Running", "Basketball", "Lifestyle", "Training"],
-    },
   ];
+
+  const toggleCategory = (category) => {
+    setSelectedCategories((current) => {
+      if (current.includes(category)) {
+        return current.filter((value) => value !== category);
+      }
+      return current.length < 2 ? [...current, category] : current;
+    });
+  };
 
   const updateSize = (index, key, value) => {
     setSizes((current) =>
@@ -355,6 +365,37 @@ function AddStockModal({ onClose }) {
               )}
             </label>
           ))}
+          <fieldset className="sm:col-span-2">
+            <legend className="mb-2 text-xs font-semibold text-zinc-600">
+              Categories <span className="font-normal text-zinc-400">(choose 1 or 2)</span>
+            </legend>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {PRODUCT_CATEGORIES.map(({ value, label }) => {
+                const checked = selectedCategories.includes(value);
+                const disabled = !checked && selectedCategories.length === 2;
+                return (
+                  <label
+                    key={value}
+                    className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-3 text-sm transition ${
+                      checked
+                        ? "border-black bg-zinc-50 font-semibold text-zinc-950"
+                        : "border-zinc-200 text-zinc-600 hover:border-zinc-400"
+                    } ${disabled ? "cursor-not-allowed opacity-40" : ""}`}
+                  >
+                    <input
+                      type="checkbox"
+                      value={value}
+                      checked={checked}
+                      disabled={disabled}
+                      onChange={() => toggleCategory(value)}
+                      className="accent-black"
+                    />
+                    {label}
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
           <section className="sm:col-span-2">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-xs font-semibold text-zinc-600">
@@ -629,7 +670,7 @@ function StocksPage() {
                       <span className="font-bold">{item.name}</span>
                     </div>
                   </td>
-                  <td className="px-5 py-4">{item.category}</td>
+                  <td className="px-5 py-4">{formatCategories(item.category)}</td>
                   <td className="px-5 py-4 font-semibold">
                     {money(item.price)}
                   </td>

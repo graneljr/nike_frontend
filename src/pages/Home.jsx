@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { motion, useReducedMotion } from "framer-motion";
 import Hero from "../components/Hero";
 import ProductGrid from "../components/ProductGrid";
 import api from "@/middleware/apiMiddleware";
@@ -11,6 +12,7 @@ const categories = [
 ];
 
 function Home() {
+  const reduceMotion = useReducedMotion();
   const [products, setProducts] = useState([]);
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
@@ -29,7 +31,13 @@ function Home() {
     <>
       <Hero />
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-8 sm:py-16 lg:py-20">
-        <div className="mb-8 flex items-end justify-between">
+        <motion.div
+          className="mb-8 flex items-end justify-between"
+          initial={reduceMotion ? false : { opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
           <div>
             <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">
               Selected for you
@@ -44,36 +52,64 @@ function Home() {
           >
             View all
           </Link>
-        </div>
-        <ProductGrid products={products.slice(0, 4)} />
+        </motion.div>
+        <motion.div
+          initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.15 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+          <ProductGrid products={products.slice(0, 4)} />
+        </motion.div>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-8 sm:pb-16 lg:pb-20">
-        <h2 className="mb-8 text-3xl font-bold tracking-tight sm:text-4xl">
+        <motion.h2
+          className="mb-8 text-3xl font-bold tracking-tight sm:text-4xl"
+          initial={reduceMotion ? false : { opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
           Shop by category
-        </h2>
+        </motion.h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {categories.map((category) => (
-            <Link
+          {categories.map((category, index) => (
+            <motion.div
               key={category.name}
-              to={`/shop?category=${category.name}`}
-              className="group relative flex min-h-72 items-end overflow-hidden bg-zinc-100 p-6"
+              className="min-h-72"
+              initial={reduceMotion ? false : { opacity: 0, y: 22 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.5, delay: reduceMotion ? 0 : index * 0.08, ease: "easeOut" }}
+              whileHover={reduceMotion ? undefined : { y: -4 }}
             >
-              <img
-                src={category.image}
-                alt=""
-                className="absolute inset-0 h-full w-full object-contain p-5 transition-transform duration-500 ease-out group-hover:scale-105"
-              />
-              <span className="relative rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white transition-colors duration-300 group-hover:bg-zinc-800">
-                {category.name}
-              </span>
-            </Link>
+              <Link
+                to={`/shop?category=${category.name}`}
+                className="group relative flex min-h-72 items-end overflow-hidden bg-zinc-100 p-6"
+              >
+                <img
+                  src={category.image}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-contain p-5 transition-transform duration-500 ease-out group-hover:scale-105"
+                />
+                <span className="relative rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white transition-colors duration-300 group-hover:bg-zinc-800">
+                  {category.name}
+                </span>
+              </Link>
+            </motion.div>
           ))}
         </div>
       </section>
 
       <section className="bg-black text-white">
-        <div className="mx-auto max-w-7xl px-4 py-14 text-center sm:px-8 sm:py-20 lg:py-24">
+        <motion.div
+          className="mx-auto max-w-7xl px-4 py-14 text-center sm:px-8 sm:py-20 lg:py-24"
+          initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.35 }}
+          transition={{ duration: 0.65, ease: "easeOut" }}
+        >
           <p className="text-sm font-bold uppercase tracking-widest text-zinc-400">
             Made to move
           </p>
@@ -89,7 +125,7 @@ function Home() {
           >
             Explore Collection
           </Link>
-        </div>
+        </motion.div>
       </section>
     </>
   );

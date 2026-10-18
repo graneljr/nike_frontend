@@ -11,7 +11,7 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { div } from "three/src/nodes/math/OperatorNode.js";
-import { formatter } from "@/utils/DateFormatter";
+import { formatDate } from "@/utils/DateFormatter";
 
 const money = (amount) => `₱${Number(amount).toLocaleString()}`;
 
@@ -173,14 +173,13 @@ export function Modal({ eyebrow, title, onClose, children }) {
 function OrderDetailsModal({ order, onClose }) {
   if (!order) return null;
   const orderItems = Array.isArray(order.items) ? order.items : [];
+  const formattedOrderDate = formatDate(order.createdAt);
   return (
     <Modal eyebrow="Order details" title={order?._id} onClose={onClose}>
       <div className="flex items-center justify-between border-b border-zinc-200 pb-5">
         <div>
           <p className="text-xs text-zinc-500">Order date</p>
-          <p className="mt-1 text-sm font-semibold"> {formatter
-                      .format(new Date(order?.createdAt))
-                      .replace(",", "")}</p>
+          <p className="mt-1 text-sm font-semibold">{formattedOrderDate}</p>
         </div>
         <Status>{order?.status}</Status>
       </div>
@@ -283,7 +282,7 @@ export function OrdersTable({ admin = false, rows, onStatusUpdate, onCustomerSta
                     <td className="px-5 py-4 font-bold">{order?._id}</td>
                     {admin && <td className="px-5 py-4">{order?.userId?.fullName}</td>}
                     <td className="px-5 py-4 text-zinc-500">
-                      {order?.createdAt}
+                      {formatDate(order?.createdAt)}
                     </td>
                     <td className="px-5 py-4">
                       {Array.isArray(order?.items)

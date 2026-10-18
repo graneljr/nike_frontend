@@ -10,6 +10,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { NavLink } from "react-router-dom";
 import api from "../middleware/apiMiddleware";
+import { toast } from "sonner";
 const userNav = [
   { icon: faHouse, label: "Dashboard", url: "/dashboard" },
     { icon: faCog, label: "Settings", url: "/settings" },
@@ -33,8 +34,13 @@ const Logout = async () => {
     }else{
       return;
     }
-    window.location.href = "/";
-  } catch (error) {}
+    toast.success("You have been logged out.");
+    window.setTimeout(() => {
+      window.location.href = "/";
+    }, 1200);
+  } catch (error) {
+    toast.error(error.response?.data?.message || "Unable to log out. Please try again.");
+  }
 };
 function DashboardSideBar({ userData }) {
   const isAdmin = userData?.role === "admin";

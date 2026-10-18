@@ -1,5 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
+import { formatCategories } from "@/utils/productCategories";
 import {
   faArrowTrendUp,
   faBox,
@@ -129,7 +130,7 @@ function AdminDashboard({orderRows,onStatusUpdate}) {
               />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-bold">{product.name}</p>
-                <p className="mt-1 text-xs text-zinc-500">{product.category}</p>
+                <p className="mt-1 text-xs text-zinc-500">{formatCategories(product.category)}</p>
               </div>
               <div className="text-right">
                 <p className="text-sm font-bold">

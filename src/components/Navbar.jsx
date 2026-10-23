@@ -18,29 +18,44 @@ function Navbar({ cartCount, userData }) {
           NIKE
         </NavLink>
         <div className="flex min-w-0 items-center gap-2.5 sm:gap-6 md:gap-9">
-          <NavLink to="/" className={`${linkClass} whitespace-nowrap text-xs sm:text-sm`}>
+          <NavLink
+            to="/"
+            className={`${linkClass} whitespace-nowrap text-xs sm:text-sm`}
+          >
             Home
           </NavLink>
-          <NavLink to="/shop" className={`${linkClass} whitespace-nowrap text-xs sm:text-sm`}>
+          <NavLink
+            to="/shop"
+            className={`${linkClass} whitespace-nowrap text-xs sm:text-sm`}
+          >
             Shop
           </NavLink>
           {userData ? (
-            <NavLink to="/dashboard" className={`${linkClass} whitespace-nowrap text-xs sm:text-sm`}>
+            <NavLink
+              to="/dashboard"
+              className={`${linkClass} whitespace-nowrap text-xs sm:text-sm`}
+            >
               <FontAwesomeIcon icon={faUser} />
             </NavLink>
           ) : (
-            <NavLink to="/register" className={`${linkClass} whitespace-nowrap text-xs sm:text-sm`}>
+            <NavLink
+              to="/register"
+              className={`${linkClass} whitespace-nowrap text-xs sm:text-sm`}
+            >
               Sign in
             </NavLink>
           )}
-          {
-            userData?.role !== "admin" && <NavLink to="/cart" className={`${linkClass} whitespace-nowrap text-xs sm:text-sm`}>
-            Cart{" "}
-            <span className="ml-1 rounded-full bg-black px-2 py-1 text-xs text-white transition-transform duration-300 hover:scale-110">
-              {cartCount}
-            </span>
-          </NavLink>
-          }
+          {userData && userData?.role !== "admin" && (
+            <NavLink
+              to="/cart"
+              className={`${linkClass} whitespace-nowrap text-xs sm:text-sm`}
+            >
+              Cart{" "}
+              <span className="ml-1 rounded-full bg-black px-2 py-1 text-xs text-white transition-transform duration-300 hover:scale-110">
+                {cartCount}
+              </span>
+            </NavLink>
+          )}
         </div>
       </nav>
     </header>

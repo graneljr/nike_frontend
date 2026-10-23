@@ -111,7 +111,7 @@ function ProfilePage({ userData, setUserData }) {
                 <input
                   type="tel"
                   autoComplete="tel"
-                  minLength={12}
+                  minLength={11}
                   value={formData.contactNumber}
                   onChange={(event) => updateField("contactNumber", event.target.value)}
                   className={fieldClassName}

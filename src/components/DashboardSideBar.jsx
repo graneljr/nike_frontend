@@ -16,6 +16,7 @@ const userNav = [
     { icon: faCog, label: "Settings", url: "/settings" },
   { icon: faUser, label: "Profile", url: "/profile" },
   { icon: faCartShopping, label: "Orders", url: "/orders" },
+  { icon: faHouse, label: "Home", url: "/" },
 ];
 
 const adminNav = [
@@ -25,6 +26,7 @@ const adminNav = [
   { icon: faCartShopping, label: "View Orders", url: "/view_orders" },
   { icon: faBoxesStacked, label: "View Stocks", url: "/stocks" },
   { icon: faUsers, label: "Users", url: "/users" },
+   { icon: faHouse, label: "Home", url: "/" },
 ];
 const Logout = async () => {
   try {

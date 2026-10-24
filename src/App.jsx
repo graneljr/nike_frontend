@@ -16,6 +16,11 @@ import DashboardLayout from "./layout/DashboardLayOut";
 import PublicLayout from "./layout/PublicLayOut";
 import PayOrder from "./pages/PayOrder";
 import { toast } from "sonner";
+import {
+  blockEmojiDrop,
+  blockEmojiInput,
+  blockEmojiPaste,
+} from "./lib/inputGuard";
 function App() {
   const [cart, setCart] = useState([]);
   const [userData, setUserData] = useState(null);
@@ -147,6 +152,12 @@ function App() {
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
 
   return (
+  <div
+    className="contents"
+    onBeforeInputCapture={blockEmojiInput}
+    onPasteCapture={blockEmojiPaste}
+    onDropCapture={blockEmojiDrop}
+  >
   <Routes>
     
       <Route
@@ -221,7 +232,8 @@ function App() {
          <Route path="/pay/:orderId" element={<PayOrder />} />
 
       <Route path="*" element={<NotFound />} />
-    </Routes>
+  </Routes>
+  </div>
   );
 }
 

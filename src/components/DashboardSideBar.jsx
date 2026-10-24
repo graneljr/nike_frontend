@@ -109,20 +109,6 @@ function DashboardSideBar({ userData }) {
           <span>Logout</span>
         </button>
       </nav>
-      <div className="mx-5 mt-8 hidden rounded-xl bg-black p-5 text-white lg:block">
-        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400">
-          Just do it
-        </p>
-        <p className="mt-2 text-lg font-black leading-tight">
-          Move with
-          <br />
-          purpose.
-        </p>
-        <FontAwesomeIcon
-          icon={faBoxOpen}
-          className="mt-5 text-xl text-zinc-400"
-        />
-      </div>
     </aside>
   );
 }

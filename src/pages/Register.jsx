@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import axios from "axios";
 import api from "@/middleware/apiMiddleware";
 import { toast } from "sonner";
+import { stripDigits, stripEmoji } from "@/lib/inputGuard";
 
 function Register() {
   const navigate = useNavigate();
@@ -19,14 +19,20 @@ function Register() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    const inputValue = stripEmoji(value);
     setCreateUser((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: name === "fullName" ? stripDigits(inputValue) : inputValue,
     }));
   };
 
   const handleRegister = async (e) => {
     e.preventDefault();
+
+    if (Array.from(createUser.password).length < 8) {
+      toast.error("Password must be at least 8 characters long.");
+      return;
+    }
 
     try {
       const response = await api.post("/auth/register",
@@ -111,9 +117,11 @@ function Register() {
                   placeholder="Password"
                   value={createUser.password}
                   onChange={handleChange}
+                  minLength={8}
                   required
                   className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-950 outline-none transition placeholder:text-zinc-400 hover:border-zinc-300 focus:border-zinc-950 focus:ring-4 focus:ring-zinc-950/5"
                 />
+                <p className="mt-1 text-xs text-zinc-500">Use at least 8 characters.</p>
               </div>
 
               <button

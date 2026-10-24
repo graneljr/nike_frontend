@@ -39,6 +39,64 @@ export function PageHeading({ eyebrow, title, description, action }) {
   );
 }
 
+export function useTablePagination(items, pageSize = 10) {
+  const [page, setPage] = useState(1);
+  const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
+
+  useEffect(() => {
+    setPage((currentPage) => Math.min(currentPage, pageCount));
+  }, [pageCount]);
+
+  return {
+    page,
+    pageCount,
+    pageItems: items.slice((page - 1) * pageSize, page * pageSize),
+    setPage,
+  };
+}
+
+export function TablePagination({
+  itemCount,
+  page,
+  pageCount,
+  pageSize = 10,
+  onPageChange,
+}) {
+  if (itemCount <= pageSize) return null;
+
+  const firstItem = (page - 1) * pageSize + 1;
+  const lastItem = Math.min(page * pageSize, itemCount);
+
+  return (
+    <div className="flex flex-col items-center justify-between gap-3 border-t border-zinc-200 bg-white px-5 py-3 sm:flex-row">
+      <p className="text-xs text-zinc-500">
+        Showing {firstItem}–{lastItem} of {itemCount}
+      </p>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => onPageChange((currentPage) => Math.max(1, currentPage - 1))}
+          disabled={page <= 1}
+          className="rounded-full border border-zinc-200 px-4 py-2 text-xs font-bold transition hover:border-black disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Previous
+        </button>
+        <span className="text-xs font-semibold text-zinc-600">
+          Page {page} of {pageCount}
+        </span>
+        <button
+          type="button"
+          onClick={() => onPageChange((currentPage) => Math.min(pageCount, currentPage + 1))}
+          disabled={page >= pageCount}
+          className="rounded-full border border-zinc-200 px-4 py-2 text-xs font-bold transition hover:border-black disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function SectionTitle({ title, link, to }) {
   return (
     <div className="mb-4 flex items-center justify-between">
@@ -360,6 +418,8 @@ export function OrdersTable({
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [statusOrder, setStatusOrder] = useState(null);
   const [nextStatus, setNextStatus] = useState("");
+  const orderRows = Array.isArray(rows) ? rows : [];
+  const orderPagination = useTablePagination(orderRows);
   return (
     <>
       <div className="overflow-hidden rounded-xl border border-zinc-200">
@@ -380,7 +440,7 @@ export function OrdersTable({
             </thead>
             {rows ? (
               <tbody className="divide-y divide-zinc-100">
-                {rows?.map((order) => (
+                {orderPagination.pageItems.map((order) => (
                   <tr key={order?._id} className="bg-white">
                     <td className="px-5 py-4 font-bold">{order?._id}</td>
                     {admin && (
@@ -482,6 +542,14 @@ export function OrdersTable({
             )}
           </table>
         </div>
+        {rows && (
+          <TablePagination
+            itemCount={orderRows.length}
+            page={orderPagination.page}
+            pageCount={orderPagination.pageCount}
+            onPageChange={orderPagination.setPage}
+          />
+        )}
       </div>
       <AnimatePresence>
         {selectedOrder && (

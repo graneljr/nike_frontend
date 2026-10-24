@@ -12,6 +12,8 @@ import {
   Modal,
   PageHeading,
   Status,
+  TablePagination,
+  useTablePagination,
 } from "../components/dashboard/DashboardUI";
 import api from "@/middleware/apiMiddleware";
 import { toast } from "sonner";
@@ -54,6 +56,8 @@ function MemberDetailsModal({ member, onClose }) {
 function UsersPage() {
   const [selectedMember, setSelectedMember] = useState(null);
   const [members, setMembers] = useState(null);
+  const memberRows = members ?? [];
+  const memberPagination = useTablePagination(memberRows);
   const [metrics, setMetrics] = useState({
     totalCustomers: 0,
     newCustomersThisMonth: 0,
@@ -124,7 +128,7 @@ function UsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {members?.map((member) => (
+              {memberPagination.pageItems.map((member) => (
                 <tr key={member?.email}>
                   <td className="px-5 py-4">
                     <p className="font-bold">{member?.fullName}</p>
@@ -150,6 +154,12 @@ function UsersPage() {
             </tbody>
           </table>
         </div>
+        <TablePagination
+          itemCount={memberRows.length}
+          page={memberPagination.page}
+          pageCount={memberPagination.pageCount}
+          onPageChange={memberPagination.setPage}
+        />
       </div>
       <AnimatePresence>
         {selectedMember && (

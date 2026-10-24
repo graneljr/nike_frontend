@@ -11,6 +11,8 @@ import {
   MetricCard,
   Modal,
   PageHeading,
+  TablePagination,
+  useTablePagination,
 } from "../components/dashboard/DashboardUI";
 import api from "@/middleware/apiMiddleware";
 import { toast } from "sonner";
@@ -528,6 +530,7 @@ function AddStockModal({ onClose }) {
 
 function StocksPage() {
   const [stockItems, setStockItems] = useState([]);
+  const stockPagination = useTablePagination(stockItems);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -658,7 +661,7 @@ function StocksPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {stockItems.map((item) => (
+              {stockPagination.pageItems.map((item) => (
                 <tr key={item._id}>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
@@ -704,6 +707,12 @@ function StocksPage() {
             </tbody>
           </table>
         </div>
+        <TablePagination
+          itemCount={stockItems.length}
+          page={stockPagination.page}
+          pageCount={stockPagination.pageCount}
+          onPageChange={stockPagination.setPage}
+        />
       </div>
 
       <AnimatePresence>

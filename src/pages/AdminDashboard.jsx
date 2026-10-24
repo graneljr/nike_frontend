@@ -18,6 +18,7 @@ import {
   SectionTitle,
 } from "../components/dashboard/DashboardUI";
 import api from "@/middleware/apiMiddleware";
+import socket from "@/socket";
 import { toast } from "sonner";
 function AdminDashboard({orderRows,onStatusUpdate}) {
   const [metrics, setMetrics] = useState({
@@ -56,6 +57,9 @@ function AdminDashboard({orderRows,onStatusUpdate}) {
     }
     fetchMetrics()
     getProducts()
+
+    socket.on("sales-metrics-updated", fetchMetrics);
+    return () => socket.off("sales-metrics-updated", fetchMetrics);
   }, []);
 
   return (

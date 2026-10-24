@@ -12,6 +12,9 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { div } from "three/src/nodes/math/OperatorNode.js";
 import { formatDate } from "@/utils/DateFormatter";
+import socket from "@/socket";
+import { toast } from "sonner";
+import api from "@/middleware/apiMiddleware";
 
 const money = (amount) => `₱${Number(amount).toLocaleString()}`;
 
@@ -54,7 +57,7 @@ export function SectionTitle({ title, link, to }) {
 
 export function Status({ children }) {
   const color =
-      children === "Delivered" || children === "Received" || children === "Active"
+    children === "Delivered" || children === "Received" || children === "Active"
       ? "bg-zinc-100 text-zinc-700"
       : children === "Shipped"
         ? "bg-zinc-200 text-zinc-800"
@@ -70,20 +73,29 @@ export function Status({ children }) {
   );
 }
 
-export function MetricCard({ icon, label, value, change, trend, trendPeriod = "vs last month" }) {
+export function MetricCard({
+  icon,
+  label,
+  value,
+  change,
+  trend,
+  trendPeriod = "vs last month",
+}) {
   const hasTrend = typeof trend === "number" || trend === "new";
-  const trendIcon = trend === "new"
-    ? faArrowTrendUp
-    : trend > 0
+  const trendIcon =
+    trend === "new"
       ? faArrowTrendUp
+      : trend > 0
+        ? faArrowTrendUp
+        : trend < 0
+          ? faArrowTrendDown
+          : faMinus;
+  const trendColor =
+    trend === "new" || trend > 0
+      ? "text-emerald-700"
       : trend < 0
-        ? faArrowTrendDown
-        : faMinus;
-  const trendColor = trend === "new" || trend > 0
-    ? "text-emerald-700"
-    : trend < 0
-      ? "text-red-600"
-      : "text-zinc-500";
+        ? "text-red-600"
+        : "text-zinc-500";
   const trendValue = !hasTrend
     ? ""
     : trend === "new"
@@ -96,12 +108,16 @@ export function MetricCard({ icon, label, value, change, trend, trendPeriod = "v
         <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700">
           <FontAwesomeIcon icon={icon} />
         </span>
-        <span className={`flex items-center gap-1 text-xs font-semibold ${hasTrend ? trendColor : "text-zinc-500"}`}>
+        <span
+          className={`flex items-center gap-1 text-xs font-semibold ${hasTrend ? trendColor : "text-zinc-500"}`}
+        >
           {hasTrend ? (
             <>
               <FontAwesomeIcon icon={trendIcon} /> {trendValue} · {trendPeriod}
             </>
-          ) : change}
+          ) : (
+            change
+          )}
         </span>
       </div>
       <p className="mt-5 text-sm text-zinc-500">{label}</p>
@@ -112,7 +128,9 @@ export function MetricCard({ icon, label, value, change, trend, trendPeriod = "v
 
 export function Modal({ eyebrow, title, onClose, children }) {
   const prefersReducedMotion = useReducedMotion();
-  const reduceMotion = prefersReducedMotion || document.documentElement.dataset.reduceMotion === "true";
+  const reduceMotion =
+    prefersReducedMotion ||
+    document.documentElement.dataset.reduceMotion === "true";
 
   useEffect(() => {
     const onKeyDown = (event) => {
@@ -138,10 +156,21 @@ export function Modal({ eyebrow, title, onClose, children }) {
         aria-modal="true"
         aria-labelledby="modal-title"
         className="max-h-[90vh] w-full overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl sm:max-w-lg sm:rounded-2xl sm:p-7"
-        initial={{ opacity: 0, y: reduceMotion ? 0 : 18, scale: reduceMotion ? 1 : 0.98 }}
+        initial={{
+          opacity: 0,
+          y: reduceMotion ? 0 : 18,
+          scale: reduceMotion ? 1 : 0.98,
+        }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: reduceMotion ? 0 : 10, scale: reduceMotion ? 1 : 0.98 }}
-        transition={{ duration: reduceMotion ? 0.01 : 0.2, ease: [0.22, 1, 0.36, 1] }}
+        exit={{
+          opacity: 0,
+          y: reduceMotion ? 0 : 10,
+          scale: reduceMotion ? 1 : 0.98,
+        }}
+        transition={{
+          duration: reduceMotion ? 0.01 : 0.2,
+          ease: [0.22, 1, 0.36, 1],
+        }}
       >
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -174,8 +203,63 @@ function OrderDetailsModal({ order, onClose }) {
   if (!order) return null;
   const orderItems = Array.isArray(order.items) ? order.items : [];
   const formattedOrderDate = formatDate(order.createdAt);
+  const [payment, setPayment] = useState(null);
+  const [orderId, setOrderId] = useState(null);
+
+  const generatePaymentQrCode = async (orderId) => {
+    try {
+      const paymentResponse = await api.post("/payment/process_payment", {
+        orderId: orderId,
+      });
+      setOrderId(orderId);
+      setPayment(paymentResponse.data);
+      socket.emit("join-order", orderId);
+      toast.info("Order created. Scan the code to complete payment.");
+    } catch (error) {}
+  };
+
+  useEffect(() => {
+    const handlePaymentSuccess = (data) => {
+      console.log("PAYMENT SUCCESS EVENT:", data);
+
+      if (data.orderId === orderId) {
+        console.log("Correct order payment received!");
+        toast.success("Payment successful!");
+        setPayment(null)
+        onClose()
+      }
+    };
+
+    socket.on("payment-success", handlePaymentSuccess);
+
+    return () => {
+      socket.off("payment-success", handlePaymentSuccess);
+    };
+  }, [orderId]);
   return (
     <Modal eyebrow="Order details" title={order?._id} onClose={onClose}>
+      {payment && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 p-5">
+          <div className="w-full max-w-sm rounded-lg bg-white p-6 text-sm text-zinc-700 shadow-xl">
+            <p>Payment QR Code:</p>
+            <img
+              src={payment.qrCode}
+              alt="Payment QR Code"
+              className="mx-auto mt-3 h-48 w-48"
+            />
+            <p className="mt-2 text-center">
+              Amount: ₱{payment.amount.toLocaleString()}
+            </p>
+            <button
+              type="button"
+              onClick={() => setPayment(null)}
+              className="mt-4 w-full rounded-full border border-zinc-300 py-2 font-medium"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between border-b border-zinc-200 pb-5">
         <div>
           <p className="text-xs text-zinc-500">Order date</p>
@@ -186,10 +270,12 @@ function OrderDetailsModal({ order, onClose }) {
       {order?.userId?.fullName && (
         <div className="border-b border-zinc-200 py-5">
           <p className="text-xs text-zinc-500">Customer</p>
-          <p className="mt-1 text-sm font-semibold">{order?.userId?.fullName}</p>
+          <p className="mt-1 text-sm font-semibold">
+            {order?.userId?.fullName}
+          </p>
         </div>
       )}
-         {order?.paymentMethod && (
+      {order?.paymentMethod && (
         <div className="border-b border-zinc-200 py-5">
           <p className="text-xs text-zinc-500">Payment Method</p>
           <p className="mt-1 text-sm font-semibold">{order?.paymentMethod}</p>
@@ -201,7 +287,7 @@ function OrderDetailsModal({ order, onClose }) {
           <p className="mt-1 text-sm font-semibold">{order?.status}</p>
         </div>
       )}
-          {order?.paymentStatus && (
+      {order?.paymentStatus && (
         <div className="border-b border-zinc-200 py-5">
           <p className="text-xs text-zinc-500">Payment Status</p>
           <p className="mt-1 text-sm font-semibold">{order?.paymentStatus}</p>
@@ -242,18 +328,35 @@ function OrderDetailsModal({ order, onClose }) {
         <span className="font-semibold">Order total</span>
         <span className="font-black">{money(order?.totalAmount)}</span>
       </div>
-      <button
-        type="button"
-        onClick={onClose}
-        className="mt-6 w-full rounded-full bg-black px-5 py-3 text-sm font-bold text-white transition hover:bg-zinc-800"
-      >
-        Done
-      </button>
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-6 w-full rounded-full bg-gray-300 px-5 py-3 text-sm font-bold text-black transition hover:bg-gray-400"
+        >
+          Done
+        </button>
+        {order?.paymentMethod === "online" &&
+          order?.paymentStatus === "pending" && (
+            <button
+              type="button"
+              onClick={() => generatePaymentQrCode(order?._id)}
+              className="mt-6 w-full rounded-full bg-black px-5 py-3 text-sm font-bold text-white transition hover:bg-zinc-800"
+            >
+              Pay Now!
+            </button>
+          )}
+      </div>
     </Modal>
   );
 }
 
-export function OrdersTable({ admin = false, rows, onStatusUpdate, onCustomerStatusUpdate }) {
+export function OrdersTable({
+  admin = false,
+  rows,
+  onStatusUpdate,
+  onCustomerStatusUpdate,
+}) {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [statusOrder, setStatusOrder] = useState(null);
   const [nextStatus, setNextStatus] = useState("");
@@ -280,14 +383,17 @@ export function OrdersTable({ admin = false, rows, onStatusUpdate, onCustomerSta
                 {rows?.map((order) => (
                   <tr key={order?._id} className="bg-white">
                     <td className="px-5 py-4 font-bold">{order?._id}</td>
-                    {admin && <td className="px-5 py-4">{order?.userId?.fullName}</td>}
+                    {admin && (
+                      <td className="px-5 py-4">{order?.userId?.fullName}</td>
+                    )}
                     <td className="px-5 py-4 text-zinc-500">
                       {formatDate(order?.createdAt)}
                     </td>
                     <td className="px-5 py-4">
                       {Array.isArray(order?.items)
                         ? order.items.reduce(
-                            (total, item) => total + (Number(item?.quantity) || 0),
+                            (total, item) =>
+                              total + (Number(item?.quantity) || 0),
                             0,
                           )
                         : typeof order?.items === "string"
@@ -311,7 +417,10 @@ export function OrdersTable({ admin = false, rows, onStatusUpdate, onCustomerSta
                         </button>
                         {admin && onStatusUpdate && (
                           <button
-                            disabled={order?.status === "received" || order?.status === "cancelled"}
+                            disabled={
+                              order?.status === "received" ||
+                              order?.status === "cancelled"
+                            }
                             type="button"
                             onClick={() => {
                               setStatusOrder(order);
@@ -322,32 +431,47 @@ export function OrdersTable({ admin = false, rows, onStatusUpdate, onCustomerSta
                             Update status
                           </button>
                         )}
-                        {!admin && onCustomerStatusUpdate && order?.status === "Processing" && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (window.confirm("Cancel this processing order?")) {
-                                onCustomerStatusUpdate(order._id, "cancelled");
-                              }
-                            }}
-                            className="whitespace-nowrap rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-bold transition hover:border-red-600 hover:text-red-600"
-                          >
-                            Cancel order
-                          </button>
-                        )}
-                        {!admin && onCustomerStatusUpdate && order?.status.toLowerCase() === "shipped" && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (window.confirm("Confirm that you received this order?")) {
-                                onCustomerStatusUpdate(order._id, "received");
-                              }
-                            }}
-                            className="whitespace-nowrap rounded-full bg-black px-3 py-1.5 text-xs font-bold text-white transition hover:bg-zinc-800"
-                          >
-                            Mark received
-                          </button>
-                        )}
+                        {!admin &&
+                          onCustomerStatusUpdate &&
+                          order?.status === "Processing" && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (
+                                  window.confirm(
+                                    "Cancel this processing order?",
+                                  )
+                                ) {
+                                  onCustomerStatusUpdate(
+                                    order._id,
+                                    "cancelled",
+                                  );
+                                }
+                              }}
+                              className="whitespace-nowrap rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-bold transition hover:border-red-600 hover:text-red-600"
+                            >
+                              Cancel order
+                            </button>
+                          )}
+                        {!admin &&
+                          onCustomerStatusUpdate &&
+                          order?.status.toLowerCase() === "shipped" && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (
+                                  window.confirm(
+                                    "Confirm that you received this order?",
+                                  )
+                                ) {
+                                  onCustomerStatusUpdate(order._id, "received");
+                                }
+                              }}
+                              className="whitespace-nowrap rounded-full bg-black px-3 py-1.5 text-xs font-bold text-white transition hover:bg-zinc-800"
+                            >
+                              Mark received
+                            </button>
+                          )}
                       </div>
                     </td>
                   </tr>
@@ -376,48 +500,53 @@ export function OrdersTable({ admin = false, rows, onStatusUpdate, onCustomerSta
             title={`Update ${statusOrder._id}`}
             onClose={() => setStatusOrder(null)}
           >
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              onStatusUpdate(statusOrder._id, nextStatus);
-              setStatusOrder(null);
-            }}
-          >
-            <p className="text-sm text-zinc-500">
-              Choose the current fulfillment status for this order.
-            </p>
-            <label className="mt-5 block">
-              <span className="mb-2 block text-xs font-semibold text-zinc-600">
-                Order status
-              </span>
-              <select
-                value={nextStatus}
-                onChange={(event) => setNextStatus(event.target.value)}
-                className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm outline-none focus:border-black"
-              >
-                {["Pending","Processing", "Shipped", "Delivered", "Received", "Cancelled"].map(
-                  (status) => (
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                onStatusUpdate(statusOrder._id, nextStatus);
+                setStatusOrder(null);
+              }}
+            >
+              <p className="text-sm text-zinc-500">
+                Choose the current fulfillment status for this order.
+              </p>
+              <label className="mt-5 block">
+                <span className="mb-2 block text-xs font-semibold text-zinc-600">
+                  Order status
+                </span>
+                <select
+                  value={nextStatus}
+                  onChange={(event) => setNextStatus(event.target.value)}
+                  className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm outline-none focus:border-black"
+                >
+                  {[
+                    "Pending",
+                    "Processing",
+                    "Shipped",
+                    "Delivered",
+                    "Received",
+                    "Cancelled",
+                  ].map((status) => (
                     <option key={status.toLocaleLowerCase()}>{status}</option>
-                  ),
-                )}
-              </select>
-            </label>
-            <div className="mt-6 flex gap-3">
-              <button
-                type="button"
-                onClick={() => setStatusOrder(null)}
-                className="flex-1 rounded-full border border-zinc-200 px-4 py-3 text-sm font-bold hover:bg-zinc-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="flex-1 rounded-full bg-black px-4 py-3 text-sm font-bold text-white hover:bg-zinc-800"
-              >
-                Save status
-              </button>
-            </div>
-          </form>
+                  ))}
+                </select>
+              </label>
+              <div className="mt-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setStatusOrder(null)}
+                  className="flex-1 rounded-full border border-zinc-200 px-4 py-3 text-sm font-bold hover:bg-zinc-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 rounded-full bg-black px-4 py-3 text-sm font-bold text-white hover:bg-zinc-800"
+                >
+                  Save status
+                </button>
+              </div>
+            </form>
           </Modal>
         )}
       </AnimatePresence>

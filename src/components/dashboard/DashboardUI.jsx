@@ -395,7 +395,7 @@ function OrderDetailsModal({ order, onClose }) {
           Done
         </button>
         {order?.paymentMethod === "online" &&
-          order?.paymentStatus === "pending" && (
+          order?.paymentStatus === "pending"  &&(
             <button
               type="button"
               onClick={() => generatePaymentQrCode(order?._id)}

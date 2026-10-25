@@ -82,23 +82,6 @@ function SettingsPage() {
               })}
             </div>
           </section>
-
-          <section className="flex flex-col items-start justify-between gap-5 rounded-2xl border border-zinc-200 bg-white p-5 sm:flex-row sm:items-center sm:p-7">
-            <div>
-              <h2 className="text-lg font-bold">Reduce motion</h2>
-              <p className="mt-1 max-w-lg text-sm leading-6 text-zinc-500">Limit animations and transitions across the store.</p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={settings.reduceMotion}
-              aria-label="Reduce motion"
-              onClick={() => updateSettings({ reduceMotion: !settings.reduceMotion })}
-              className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${settings.reduceMotion ? "bg-black" : "bg-zinc-300"}`}
-            >
-              <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${settings.reduceMotion ? "translate-x-6" : "translate-x-1"}`} />
-            </button>
-          </section>
         </div>
 
         <aside className="overflow-hidden rounded-2xl bg-black p-6 text-white xl:sticky xl:top-8">

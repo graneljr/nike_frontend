@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBars } from "@fortawesome/free-solid-svg-icons";
 import DashbaordSideBar from "../components/DashboardSideBar";
 
 function SkeletonBlock({ className = "" }) {
@@ -174,6 +176,7 @@ function DashboardSkeleton({ pathname, isAdmin }) {
 function DashboardLayout({userData}) {
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
@@ -181,10 +184,40 @@ function DashboardLayout({userData}) {
     return () => window.clearTimeout(timer);
   }, [location.pathname]);
 
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isSidebarOpen) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setIsSidebarOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [isSidebarOpen]);
+
   return (
     <div className="min-h-screen bg-white text-zinc-950 lg:flex">
-      <DashbaordSideBar userData={userData}/>
+      <DashbaordSideBar
+        userData={userData}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
       <main className="min-w-0 flex-1">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-zinc-200 bg-white px-4 sm:px-6 lg:hidden">
+          <button
+            type="button"
+            aria-label="Open dashboard navigation"
+            aria-expanded={isSidebarOpen}
+            aria-controls="dashboard-sidebar"
+            onClick={() => setIsSidebarOpen(true)}
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-zinc-700 transition hover:bg-zinc-100 hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+          >
+            <FontAwesomeIcon icon={faBars} className="text-lg" />
+          </button>
+          <span className="text-sm font-bold">Dashboard</span>
+        </header>
         {isLoading ? (
           <DashboardSkeleton pathname={location.pathname} isAdmin={userData?.role === "admin"} />
         ) : (

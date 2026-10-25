@@ -6,6 +6,7 @@ import {
   faCartShopping,
   faUsers,
   faCog,
+  faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { NavLink } from "react-router-dom";
@@ -44,7 +45,7 @@ const Logout = async () => {
     toast.error(error.response?.data?.message || "Unable to log out. Please try again.");
   }
 };
-function DashboardSideBar({ userData }) {
+function DashboardSideBar({ userData, isOpen = false, onClose = () => {} }) {
   const isAdmin = userData?.role === "admin";
   const links = isAdmin ? adminNav : userNav;
   const fullName =
@@ -68,7 +69,23 @@ function DashboardSideBar({ userData }) {
     }`;
 
   return (
-    <aside className="border-b border-zinc-200 bg-zinc-50 lg:sticky lg:top-0 lg:h-screen lg:w-64 lg:shrink-0 lg:border-b-0 lg:border-r">
+    <>
+      {isOpen && (
+        <button
+          type="button"
+          aria-label="Close dashboard navigation"
+          onClick={onClose}
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px] lg:hidden"
+        />
+      )}
+      <aside
+        id="dashboard-sidebar"
+        className={`fixed inset-y-0 left-0 z-50 flex h-dvh w-72 max-w-[85vw] flex-col border-r border-zinc-200 bg-zinc-50 shadow-xl transition-all duration-200 ease-out lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-64 lg:max-w-none lg:shrink-0 lg:translate-x-0 lg:shadow-none ${
+          isOpen
+            ? "visible translate-x-0"
+            : "invisible -translate-x-full lg:visible"
+        }`}
+      >
       <div className="flex items-center justify-between gap-4 px-5 py-4 lg:block lg:px-5 lg:py-7">
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black text-sm font-black text-white">
@@ -81,35 +98,49 @@ function DashboardSideBar({ userData }) {
             <p className="truncate text-xs text-zinc-500">{email}</p>
           </div>
         </div>
-        <span className="hidden rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500 ring-1 ring-zinc-200 lg:mt-5 lg:inline-block">
-          {isAdmin ? "Store admin" : "Nike member"}
-        </span>
+        <button
+          type="button"
+          aria-label="Close dashboard navigation"
+          onClick={onClose}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-zinc-200 hover:text-black lg:hidden"
+        >
+          <FontAwesomeIcon icon={faXmark} />
+        </button>
       </div>
+
+      <span className="hidden rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500 ring-1 ring-zinc-200 lg:mx-5 lg:mt-[-1rem] lg:mb-6 lg:inline-block lg:w-fit">
+        {isAdmin ? "Store admin" : "Nike member"}
+      </span>
 
       <nav
         aria-label="Dashboard navigation"
-        className="flex gap-2 overflow-x-auto px-4 pb-4 lg:flex-col lg:overflow-visible lg:px-3 lg:pb-0"
+        className="flex flex-1 flex-col gap-2 overflow-y-auto px-4 pb-5 lg:px-3"
       >
         {links.map((nav) => (
           <NavLink
             key={nav.url}
             to={nav.url}
-            end={nav.url === "/dashboard"}
+            end={nav.url === "/dashboard" || nav.url === "/"}
             className={linkClass}
+            onClick={onClose}
           >
             <FontAwesomeIcon icon={nav.icon} className="w-4" />
             <span>{nav.label}</span>
           </NavLink>
         ))}
         <button
-          onClick={Logout}
+          onClick={() => {
+            onClose();
+            Logout();
+          }}
           className="flex hover:bg-zinc-200 hover:text-black shrink-0 items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold transition-colors"
         >
           <FontAwesomeIcon icon={faArrowRightFromBracket} className="w-4" />
           <span>Logout</span>
         </button>
       </nav>
-    </aside>
+      </aside>
+    </>
   );
 }
 

@@ -232,6 +232,7 @@ function App() {
         <Route path="/view_orders" element={<Dashboard userData={userData} />} />
         <Route path="/stocks" element={<Dashboard userData={userData} />} />
         <Route path="/users" element={<Dashboard userData={userData} />} />
+        <Route path="/refunds" element={<Dashboard userData={userData} />} />
       </Route>
          <Route path="/pay/:orderId" element={<PayOrder />} />
 

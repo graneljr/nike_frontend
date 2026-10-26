@@ -493,13 +493,15 @@ export function OrdersTable({
                         )}
                         {!admin &&
                           onCustomerStatusUpdate &&
-                          order?.status === "Processing" && (
+                          ["pending", "processing"].includes(
+                            String(order?.status || "").toLowerCase(),
+                          ) && (
                             <button
                               type="button"
                               onClick={() => {
                                 if (
                                   window.confirm(
-                                    "Cancel this processing order?",
+                                    "Cancel this order?",
                                   )
                                 ) {
                                   onCustomerStatusUpdate(

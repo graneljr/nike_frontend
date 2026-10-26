@@ -4,6 +4,7 @@ import {
   faBoxOpen,
   faBoxesStacked,
   faCartShopping,
+  faMoneyBillWave,
   faUsers,
   faCog,
   faXmark,
@@ -17,6 +18,7 @@ const userNav = [
     { icon: faCog, label: "Settings", url: "/settings" },
   { icon: faUser, label: "Profile", url: "/profile" },
   { icon: faCartShopping, label: "Orders", url: "/orders" },
+  { icon: faMoneyBillWave, label: "Refunds", url: "/refunds" },
   { icon: faHouse, label: "Home", url: "/" },
 ];
 
@@ -25,6 +27,7 @@ const adminNav = [
   { icon: faUser, label: "Profile", url: "/profile" },
   { icon: faCog, label: "Settings", url: "/settings" },
   { icon: faCartShopping, label: "View Orders", url: "/view_orders" },
+  { icon: faMoneyBillWave, label: "Refunds", url: "/refunds" },
   { icon: faBoxesStacked, label: "View Stocks", url: "/stocks" },
   { icon: faUsers, label: "Users", url: "/users" },
    { icon: faHouse, label: "Home", url: "/" },

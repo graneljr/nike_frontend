@@ -43,7 +43,7 @@ const termsSections = [
     number: "06",
     title: "Cancellations, returns, and exchanges",
     paragraphs: [
-      "The store currently allows customers to cancel an order while it is processing. Once an order has shipped, use the order page to confirm receipt when it arrives, or contact the shop if there is a problem.",
+      "Customers can cancel pending or processing orders from the order page. Once an order has shipped, use the order page to confirm receipt when it arrives, or contact the shop if there is a problem.",
       "Contact us before sending an item back or requesting an exchange. The shop will confirm whether the item and order are eligible and explain the next steps.",
     ],
   },

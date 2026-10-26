@@ -7,6 +7,7 @@ import SettingsPage from "./SettingsPage";
 import StocksPage from "./StocksPage";
 import UserDashboard from "./UserDashboard";
 import UsersPage from "./UsersPage";
+import RefundsPage from "./RefundsPage";
 import api from "@/middleware/apiMiddleware";
 import { toast } from "sonner";
 
@@ -46,6 +47,7 @@ function Dashboard({ userData, setUserData }) {
     page = <ProfilePage userData={userData} setUserData={setUserData} />;
   }
   else if (pathname === "/settings") page = <SettingsPage />;
+  else if (pathname === "/refunds") page = <RefundsPage admin={isAdmin} />;
   else if (pathname === "/orders" || pathname === "/view_orders") {
     page = (
       <OrdersPage

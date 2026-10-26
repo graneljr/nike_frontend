@@ -18,6 +18,7 @@ import {
 import api from "@/middleware/apiMiddleware";
 import { toast } from "sonner";
 import { formatDate } from "@/utils/DateFormatter";
+import { div } from "three/src/nodes/math/OperatorNode.js";
 
 function MemberDetailsModal({ member, onClose }) {
   if (!member) return null;
@@ -69,7 +70,9 @@ function UsersPage() {
         const users = await api.get("/users/");
         setMembers(users.data);
       } catch (error) {
-        toast.error(error.response?.data?.message || "Unable to load customers.");
+        toast.error(
+          error.response?.data?.message || "Unable to load customers.",
+        );
       }
     };
     const getMetrics = async () => {
@@ -77,7 +80,9 @@ function UsersPage() {
         const response = await api.get("/users/metrics");
         setMetrics(response.data);
       } catch (error) {
-        toast.error(error.response?.data?.message || "Unable to load customer metrics.");
+        toast.error(
+          error.response?.data?.message || "Unable to load customer metrics.",
+        );
       }
     };
 
@@ -128,29 +133,33 @@ function UsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {memberPagination?.pageItems?.map((member) => (
-                <tr key={member?.email}>
-                  <td className="px-5 py-4">
-                    <p className="font-bold">{member?.fullName}</p>
-                    <p className="mt-1 text-xs text-zinc-500">
-                      {member?.email}
-                    </p>
-                  </td>
-                  <td className="px-5 py-4 text-zinc-500">
-                    {formatDate(member?.createdAt)}
-                  </td>
-                  <td className="px-5 py-4 text-right">
-                    <button
-                      type="button"
-                      aria-label={`View ${member.fullName}`}
-                      onClick={() => setSelectedMember(member)}
-                      className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 transition hover:bg-zinc-100 hover:text-black"
-                    >
-                      <FontAwesomeIcon icon={faChevronRight} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {memberPagination?.pageItems
+                ? memberPagination?.pageItems?.map((member) => (
+                    <tr key={member?.email}>
+                      <td className="px-5 py-4">
+                        <p className="font-bold">{member?.fullName}</p>
+                        <p className="mt-1 text-xs text-zinc-500">
+                          {member?.email}
+                        </p>
+                      </td>
+                      <td className="px-5 py-4 text-zinc-500">
+                        {formatDate(member?.createdAt)}
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <button
+                          type="button"
+                          aria-label={`View ${member.fullName}`}
+                          onClick={() => setSelectedMember(member)}
+                          className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 transition hover:bg-zinc-100 hover:text-black"
+                        >
+                          <FontAwesomeIcon icon={faChevronRight} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                : <div className="w-full h-full flex items-center justify-center">
+                  <h1 className="text-2xl font-bold">NO USERS</h1>
+                  </div>}
             </tbody>
           </table>
         </div>

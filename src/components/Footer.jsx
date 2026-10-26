@@ -72,6 +72,11 @@ function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/terms" className="transition hover:text-white">
+                  Terms &amp; Conditions
+                </Link>
+              </li>
+              <li>
                 <a
                   href="https://www.nike.com/ph/help/a/shipping-delivery-gs?_gl=1*281xz6*_up*MQ..*_gs*MQ..&gclid=Cj0KCQjw5bjVBhCiARIsAJzMVnQh_fi-twNqDsFjw0jQvFD1e6XKXj1Fok0Z76GTwno-ZuBYb1z01f0aAnlzEALw_wcB&gclsrc=aw.ds"
                   className="transition hover:text-white"

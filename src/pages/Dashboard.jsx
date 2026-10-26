@@ -70,7 +70,7 @@ function Dashboard({ userData, setUserData }) {
       <div className="mx-auto max-w-7xl">
         {page}
         <footer className="mt-14 border-t border-zinc-200 pt-5 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
-          Nike Store · Member and store dashboard
+       © 2026 Nike Store. All rights reserved.
         </footer>
       </div>
     </div>

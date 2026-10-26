@@ -30,6 +30,12 @@ function Navbar({ cartCount, userData }) {
           >
             Shop
           </NavLink>
+          <NavLink
+            to="/contact"
+            className={`${linkClass} whitespace-nowrap text-xs sm:text-sm`}
+          >
+            Contact
+          </NavLink>
           {userData ? (
             <NavLink
               to="/dashboard"

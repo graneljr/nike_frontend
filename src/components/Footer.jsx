@@ -67,14 +67,9 @@ function Footer() {
             </h2>
             <ul className="mt-5 space-y-3 text-sm text-zinc-400">
               <li>
-                <a
-                  href="https://www.nike.com/ph/help"
-                  className="transition hover:text-white"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <Link to="/contact" className="transition hover:text-white">
                   Contact Us
-                </a>
+                </Link>
               </li>
               <li>
                 <a

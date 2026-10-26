@@ -13,7 +13,10 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import api from "./middleware/apiMiddleware";
 import Dashboard from "./pages/Dashboard";
-import { applyDisplaySettings, getDisplaySettings } from "./lib/displaySettings";
+import {
+  applyDisplaySettings,
+  getDisplaySettings,
+} from "./lib/displaySettings";
 import DashboardLayout from "./layout/DashboardLayOut";
 import PublicLayout from "./layout/PublicLayOut";
 import PayOrder from "./pages/PayOrder";
@@ -23,11 +26,13 @@ import {
   blockEmojiInput,
   blockEmojiPaste,
 } from "./lib/inputGuard";
+import { useLocation } from "react-router-dom";
 function App() {
   const [cart, setCart] = useState([]);
   const [userData, setUserData] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [cartOwnerId, setCartOwnerId] = useState(null);
+  const location = useLocation();
   useEffect(() => {
     applyDisplaySettings(getDisplaySettings());
     const getCurrentUser = async () => {
@@ -37,6 +42,8 @@ function App() {
         setUserData(response.data.userData);
       } catch (error) {
         setUserData(null);
+
+        if (location.pathname === "/dashboard") window.location.href = "/";
       } finally {
         setAuthChecked(true);
       }
@@ -74,22 +81,24 @@ function App() {
   useEffect(() => {
     if (!userData?._id || cartOwnerId !== userData._id) return;
 
-    api.put("/cart", {
-      items: cart.map((item) => ({
-        productId: item._id || item.id,
-        size: item.size,
-        quantity: item.quantity,
-        selected: item.selected !== false,
-      })),
-    }).catch(() => {
-      // Cart changes remain usable in memory if the API is temporarily unavailable.
-    });
+    api
+      .put("/cart", {
+        items: cart.map((item) => ({
+          productId: item._id || item.id,
+          size: item.size,
+          quantity: item.quantity,
+          selected: item.selected !== false,
+        })),
+      })
+      .catch(() => {
+        // Cart changes remain usable in memory if the API is temporarily unavailable.
+      });
   }, [cart, cartOwnerId, userData]);
 
   function getAvailableQuantity(product, size) {
     const variants = product.sizes || product.size || [];
-    const variant = variants.find((entry) =>
-      String(entry.label ?? entry.size) === String(size),
+    const variant = variants.find(
+      (entry) => String(entry.label ?? entry.size) === String(size),
     );
     return variant?.quantity == null ? null : Number(variant.quantity);
   }
@@ -136,15 +145,19 @@ function App() {
   }
 
   function removeFromCart(id, size) {
-    const itemToRemove = cart.find((item) => item.id === id && item.size === size);
+    const itemToRemove = cart.find(
+      (item) => item.id === id && item.size === size,
+    );
     setCart(cart.filter((item) => !(item.id === id && item.size === size)));
     if (itemToRemove) toast.success(`${itemToRemove.name} removed from cart.`);
   }
 
   function setItemSelected(id, size, selected) {
-    setCart((items) => items.map((item) =>
-      item.id === id && item.size === size ? { ...item, selected } : item,
-    ));
+    setCart((items) =>
+      items.map((item) =>
+        item.id === id && item.size === size ? { ...item, selected } : item,
+      ),
+    );
   }
 
   function setAllItemsSelected(selected) {
@@ -154,91 +167,79 @@ function App() {
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
 
   return (
-  <div
-    className="contents"
-    onBeforeInputCapture={blockEmojiInput}
-    onPasteCapture={blockEmojiPaste}
-    onDropCapture={blockEmojiDrop}
-  >
-  <Routes>
-    
-      <Route
-        element={
-          <PublicLayout
-            cartCount={cartCount}
-            userData={userData}
-          />
-        }
-      >
-        <Route path="/" element={<Home />} />
-        <Route path="/shop" element={<Shop />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/terms" element={<Terms />} />
-
+    <div
+      className="contents"
+      onBeforeInputCapture={blockEmojiInput}
+      onPasteCapture={blockEmojiPaste}
+      onDropCapture={blockEmojiDrop}
+    >
+      <Routes>
         <Route
-          path="/product/:id"
-          element={
-            <ProductDetails
-              addToCart={addToCart}
-              isAuthenticated={Boolean(userData?._id)}
-            />
-          }
-        />
+          element={<PublicLayout cartCount={cartCount} userData={userData} />}
+        >
+          <Route path="/" element={<Home />} />
+          <Route path="/shop" element={<Shop />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/terms" element={<Terms />} />
 
-        <Route
-          path="/cart"
-          element={
-            <Cart
-              cart={cart}
-              updateQuantity={updateQuantity}
-              removeFromCart={removeFromCart}
-              setItemSelected={setItemSelected}
-              setAllItemsSelected={setAllItemsSelected}
-            />
-          }
-        />
-
-        <Route path="/register" element={<Register />} />
-
-        <Route
-          path="/login"
-          element={
-            <Login
-              setUserData={setUserData}
-            />
-          }
-        />
-      </Route>
-
-   
-      <Route element={<DashboardLayout userData={userData}/>}>
-        <Route
-          path="/dashboard"
-          element={<Dashboard userData={userData} />}
-        />
-        <Route
-          path="/admin/dashboard"
-          element={<Dashboard userData={userData} />}
-        />
-         <Route
-          path="/profile"
-          element={<Dashboard userData={userData} setUserData={setUserData} />}
-        />
           <Route
-          path="/settings"
-          element={<Dashboard userData={userData} />}
-        />
-        <Route path="/orders" element={<Dashboard userData={userData} />} />
-        <Route path="/view_orders" element={<Dashboard userData={userData} />} />
-        <Route path="/stocks" element={<Dashboard userData={userData} />} />
-        <Route path="/users" element={<Dashboard userData={userData} />} />
-        <Route path="/refunds" element={<Dashboard userData={userData} />} />
-      </Route>
-         <Route path="/pay/:orderId" element={<PayOrder />} />
+            path="/product/:id"
+            element={
+              <ProductDetails
+                addToCart={addToCart}
+                isAuthenticated={Boolean(userData?._id)}
+              />
+            }
+          />
 
-      <Route path="*" element={<NotFound />} />
-  </Routes>
-  </div>
+          <Route
+            path="/cart"
+            element={
+              <Cart
+                cart={cart}
+                updateQuantity={updateQuantity}
+                removeFromCart={removeFromCart}
+                setItemSelected={setItemSelected}
+                setAllItemsSelected={setAllItemsSelected}
+              />
+            }
+          />
+
+          <Route path="/register" element={<Register />} />
+
+          <Route path="/login" element={<Login setUserData={setUserData} />} />
+        </Route>
+
+        <Route element={<DashboardLayout userData={userData} />}>
+          <Route
+            path="/dashboard"
+            element={<Dashboard userData={userData} />}
+          />
+          <Route
+            path="/admin/dashboard"
+            element={<Dashboard userData={userData} />}
+          />
+          <Route
+            path="/profile"
+            element={
+              <Dashboard userData={userData} setUserData={setUserData} />
+            }
+          />
+          <Route path="/settings" element={<Dashboard userData={userData} />} />
+          <Route path="/orders" element={<Dashboard userData={userData} />} />
+          <Route
+            path="/view_orders"
+            element={<Dashboard userData={userData} />}
+          />
+          <Route path="/stocks" element={<Dashboard userData={userData} />} />
+          <Route path="/users" element={<Dashboard userData={userData} />} />
+          <Route path="/refunds" element={<Dashboard userData={userData} />} />
+        </Route>
+        <Route path="/pay/:orderId" element={<PayOrder />} />
+
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </div>
   );
 }
 

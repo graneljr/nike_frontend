@@ -128,7 +128,7 @@ function UsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {memberPagination.pageItems.map((member) => (
+              {memberPagination?.pageItems?.map((member) => (
                 <tr key={member?.email}>
                   <td className="px-5 py-4">
                     <p className="font-bold">{member?.fullName}</p>

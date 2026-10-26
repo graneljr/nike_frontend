@@ -18,6 +18,27 @@ import api from "@/middleware/apiMiddleware";
 import { toast } from "sonner";
 import { formatDate } from "@/utils/DateFormatter";
 
+function normalizeUserList(responseData) {
+  let data = responseData;
+
+  // Accept JSON-encoded responses as well as ordinary JSON arrays.
+  for (let depth = 0; depth < 2 && typeof data === "string"; depth += 1) {
+    try {
+      data = JSON.parse(data);
+    } catch {
+      return null;
+    }
+  }
+
+  if (Array.isArray(data)) return data;
+  if (!data || typeof data !== "object") return null;
+
+  for (const key of ["users", "data", "items", "results"]) {
+    if (Array.isArray(data[key])) return data[key];
+  }
+  return null;
+}
+
 function MemberDetailsModal({ member, onClose }) {
   if (!member) return null;
   return (
@@ -67,17 +88,20 @@ function UsersPage() {
     const getUsers = async () => {
       try {
         const users = await api.get("/users/");
-        const responseUsers = Array.isArray(users.data)
-          ? users.data
-          : Array.isArray(users.data?.users)
-            ? users.data.users
-            : Array.isArray(users.data?.data)
-              ? users.data.data
-              : null;
+        const responseUsers = normalizeUserList(users.data);
 
         if (!responseUsers) {
           setMembers([]);
-          toast.error("The server returned customer data in an unexpected format.");
+          console.error("Unexpected /users response shape", {
+            status: users.status,
+            contentType: users.headers?.["content-type"],
+            dataType: typeof users.data,
+            dataKeys:
+              users.data && typeof users.data === "object"
+                ? Object.keys(users.data)
+                : undefined,
+          });
+          toast.error("Could not read the customer list. Check the /api/users response.");
           return;
         }
 

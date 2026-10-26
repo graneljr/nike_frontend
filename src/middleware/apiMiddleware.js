@@ -1,8 +1,14 @@
 
 import axios from "axios";
 
+const backendApiUrl =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.DEV
+    ? "/api"
+    : "https://nike-backend-cz93.vercel.app/api");
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
+  baseURL: backendApiUrl,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",

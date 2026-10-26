@@ -21,7 +21,7 @@ import { formatDate } from "@/utils/DateFormatter";
 function normalizeUserList(responseData) {
   let data = responseData;
 
-  // Accept JSON-encoded responses as well as ordinary JSON arrays.
+ 
   for (let depth = 0; depth < 2 && typeof data === "string"; depth += 1) {
     try {
       data = JSON.parse(data);
@@ -89,7 +89,7 @@ function UsersPage() {
       try {
         const users = await api.get("/users/");
         const responseUsers = normalizeUserList(users.data);
-
+        console.log(responseUsers)
         if (!responseUsers) {
           setMembers([]);
           console.error("Unexpected /users response shape", {

@@ -10,7 +10,6 @@ import {
   faMinus,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
-import { div } from "three/src/nodes/math/OperatorNode.js";
 import { formatDate } from "@/utils/DateFormatter";
 import socket from "@/socket";
 import { toast } from "sonner";
@@ -41,7 +40,8 @@ export function PageHeading({ eyebrow, title, description, action }) {
 
 export function useTablePagination(items, pageSize = 10) {
   const [page, setPage] = useState(1);
-  const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
+  const safeItems = Array.isArray(items) ? items : [];
+  const pageCount = Math.max(1, Math.ceil(safeItems.length / pageSize));
 
   useEffect(() => {
     setPage((currentPage) => Math.min(currentPage, pageCount));
@@ -50,7 +50,7 @@ export function useTablePagination(items, pageSize = 10) {
   return {
     page,
     pageCount,
-    pageItems: items.slice((page - 1) * pageSize, page * pageSize),
+    pageItems: safeItems.slice((page - 1) * pageSize, page * pageSize),
     setPage,
   };
 }

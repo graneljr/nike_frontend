@@ -11,14 +11,12 @@ import {
   MetricCard,
   Modal,
   PageHeading,
-  Status,
   TablePagination,
   useTablePagination,
 } from "../components/dashboard/DashboardUI";
 import api from "@/middleware/apiMiddleware";
 import { toast } from "sonner";
 import { formatDate } from "@/utils/DateFormatter";
-import { div } from "three/src/nodes/math/OperatorNode.js";
 
 function MemberDetailsModal({ member, onClose }) {
   if (!member) return null;
@@ -39,7 +37,7 @@ function MemberDetailsModal({ member, onClose }) {
         <div className="flex items-center justify-between py-4">
           <dt className="text-xs text-zinc-500">Phone Number</dt>
           <dd className="mt-1 text-sm font-semibold">
-            {member.conactNumber || "N/A"}
+            {member.contactNumber || "N/A"}
           </dd>
         </div>
       </dl>
@@ -56,8 +54,9 @@ function MemberDetailsModal({ member, onClose }) {
 
 function UsersPage() {
   const [selectedMember, setSelectedMember] = useState(null);
-  const [members, setMembers] = useState(null);
-  const memberRows = members ?? [];
+  const [members, setMembers] = useState([]);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(true);
+  const memberRows = Array.isArray(members) ? members : [];
   const memberPagination = useTablePagination(memberRows);
   const [metrics, setMetrics] = useState({
     totalCustomers: 0,
@@ -68,11 +67,28 @@ function UsersPage() {
     const getUsers = async () => {
       try {
         const users = await api.get("/users/");
-        setMembers(users.data);
+        const responseUsers = Array.isArray(users.data)
+          ? users.data
+          : Array.isArray(users.data?.users)
+            ? users.data.users
+            : Array.isArray(users.data?.data)
+              ? users.data.data
+              : null;
+
+        if (!responseUsers) {
+          setMembers([]);
+          toast.error("The server returned customer data in an unexpected format.");
+          return;
+        }
+
+        setMembers(responseUsers);
       } catch (error) {
+        setMembers([]);
         toast.error(
           error.response?.data?.message || "Unable to load customers.",
         );
+      } finally {
+        setIsLoadingMembers(false);
       }
     };
     const getMetrics = async () => {
@@ -133,33 +149,49 @@ function UsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {memberPagination?.pageItems
-                ? memberPagination?.pageItems?.map((member) => (
-                    <tr key={member?.email}>
-                      <td className="px-5 py-4">
-                        <p className="font-bold">{member?.fullName}</p>
-                        <p className="mt-1 text-xs text-zinc-500">
-                          {member?.email}
-                        </p>
-                      </td>
-                      <td className="px-5 py-4 text-zinc-500">
-                        {formatDate(member?.createdAt)}
-                      </td>
-                      <td className="px-5 py-4 text-right">
-                        <button
-                          type="button"
-                          aria-label={`View ${member.fullName}`}
-                          onClick={() => setSelectedMember(member)}
-                          className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 transition hover:bg-zinc-100 hover:text-black"
-                        >
-                          <FontAwesomeIcon icon={faChevronRight} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                : <div className="w-full h-full flex items-center justify-center">
-                  <h1 className="text-2xl font-bold">NO USERS</h1>
-                  </div>}
+              {isLoadingMembers ? (
+                <tr>
+                  <td
+                    colSpan={3}
+                    className="px-5 py-10 text-center text-sm text-zinc-500"
+                  >
+                    Loading customers…
+                  </td>
+                </tr>
+              ) : memberRows.length > 0 ? (
+                memberPagination.pageItems.map((member) => (
+                  <tr key={member?._id ?? member?.email}>
+                    <td className="px-5 py-4">
+                      <p className="font-bold">{member?.fullName}</p>
+                      <p className="mt-1 text-xs text-zinc-500">
+                        {member?.email}
+                      </p>
+                    </td>
+                    <td className="px-5 py-4 text-zinc-500">
+                      {formatDate(member?.createdAt)}
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <button
+                        type="button"
+                        aria-label={`View ${member.fullName}`}
+                        onClick={() => setSelectedMember(member)}
+                        className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 transition hover:bg-zinc-100 hover:text-black"
+                      >
+                        <FontAwesomeIcon icon={faChevronRight} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan={3}
+                    className="px-5 py-10 text-center text-sm text-zinc-500"
+                  >
+                    No registered customers found.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
